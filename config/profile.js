@@ -1,5 +1,5 @@
 module.exports = {
   devebot: {
-    mode: 'silent'
+    mode: "silent"
   }
 };
