@@ -1,6 +1,6 @@
 'use strict';
 
-const app = require('../../server');
+const app = require('../../app');
 
 describe('app-webserver', function() {
   describe('start/stop app.server', function() {
