@@ -90,7 +90,7 @@ function WebserverTrigger (params = {}) {
 
   this.start = function() {
     if (sandboxConfig.enabled === false) return Promise.resolve();
-    return new Promise(function(onResolved, onRejected) {
+    return new Promise(function(resolve, reject) {
       L.has("silly") && L.log("silly", T.add({ protocol, host, port }).toMessage({
         tags: [ blockRef, "webserver", "starting" ],
         text: "webserver is starting"
@@ -104,14 +104,14 @@ function WebserverTrigger (params = {}) {
           tags: [ blockRef, "webserver", "started" ],
           text: "webserver has started"
         }));
-        onResolved(serverInstance);
+        resolve(serverInstance);
       }));
     });
   };
 
   this.stop = function() {
     if (sandboxConfig.enabled === false) return Promise.resolve();
-    return new Promise(function(onResolved, onRejected) {
+    return new Promise(function(resolve, reject) {
       L.has("silly") && L.log("silly", T.add({ protocol, host, port }).toMessage({
         tags: [ blockRef, "webserver", "stopping" ],
         text: "webserver is stopping"
@@ -125,13 +125,13 @@ function WebserverTrigger (params = {}) {
             tags: [ blockRef, "webserver", "stopped" ],
             text: "the webserver was not open when it was closed"
           }));
-          onRejected(err);
+          reject(err);
         } else {
           L.has("silly") && L.log("silly", T.toMessage({
             tags: [ blockRef, "webserver", "stopped" ],
             text: "the webserver has stopped successfully"
           }));
-          onResolved();
+          resolve();
         }
       });
     });
@@ -159,7 +159,7 @@ function WebserverTrigger (params = {}) {
       }
     };
   };
-};
+}
 
 module.exports = WebserverTrigger;
 
@@ -200,7 +200,7 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
 
     ssl.ca = serverCfg.ssl.ca;
     try {
-      ssl.ca = ssl.ca || fs.readFileSync(serverCfg.ssl.ca_file);
+      ssl.ca = ssl.ca || readFileSync(serverCfg.ssl.ca_file);
     } catch (error) {
       L.has("silly") && L.log("silly", T.add({
         ca: ssl.ca,
@@ -215,8 +215,8 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
     ssl.key = serverCfg.ssl.key;
     ssl.cert = serverCfg.ssl.cert;
     try {
-      ssl.key = ssl.key || fs.readFileSync(serverCfg.ssl.key_file);
-      ssl.cert = ssl.cert || fs.readFileSync(serverCfg.ssl.cert_file);
+      ssl.key = ssl.key || readFileSync(serverCfg.ssl.key_file);
+      ssl.cert = ssl.cert || readFileSync(serverCfg.ssl.cert_file);
     } catch (error) {
       L.has("silly") && L.log("silly", T.add({
         key: ssl.key,
@@ -235,8 +235,8 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
         tags: [ blockRef, "ssl", "key-cert-use-default" ],
         text: "Using default key/cert for localhost"
       }));
-      ssl.key = fs.readFileSync(path.join(__dirname, "../../data/ssl/localhost.key.pem"));
-      ssl.cert = fs.readFileSync(path.join(__dirname, "../../data/ssl/localhost.cert.pem"));
+      ssl.key = readFileSync(path.join(__dirname, "../../data/ssl/localhost.key.pem"));
+      ssl.cert = readFileSync(path.join(__dirname, "../../data/ssl/localhost.cert.pem"));
     }
 
     if (ssl.key && ssl.cert) {
@@ -254,4 +254,8 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
   }
 
   return ssl;
+}
+
+function readFileSync (filepath) {
+  return fs.readFileSync(filepath);
 }
