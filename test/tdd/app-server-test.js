@@ -4,7 +4,7 @@ const Devebot = require("devebot");
 const chores = Devebot.require("chores");
 const envcloak = require("envcloak").instance;
 
-const app = require("../../app");
+const app = require("../app/simplest");
 
 describe("app-webserver", function() {
   describe("start/stop app.server", function() {
@@ -23,11 +23,9 @@ describe("app-webserver", function() {
       chores.clearCache();
     });
     //
-    it("app.server should be started/stopped properly", function(done) {
-      app.server.start().then(function() {
+    it("app.server should be started/stopped properly", function() {
+      return app.server.start().then(function() {
         return app.server.stop();
-      }).then(function() {
-        done();
       });
     });
   });
