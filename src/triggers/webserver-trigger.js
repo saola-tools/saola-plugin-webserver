@@ -11,11 +11,8 @@ const lodash = Devebot.require("lodash");
 
 const SERVER_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"];
 
-function WebserverTrigger (params = {}) {
-  const { packageName, sandboxConfig, loggingFactory } = params;
-  const L = loggingFactory.getLogger();
-  const T = loggingFactory.getTracer();
-  const blockRef = chores.getBlockRef(__filename, packageName);
+function SubWebServer (params = {}) {
+  const { blockRef, sandboxConfig, L, T } = params;
 
   let { port, host } = extractConfigAddress(sandboxConfig);
 
@@ -150,8 +147,69 @@ function WebserverTrigger (params = {}) {
       });
     });
   };
+}
+
+function WebserverTrigger (params = {}) {
+  const { packageName, loggingFactory } = params;
+  const L = loggingFactory.getLogger();
+  const T = loggingFactory.getTracer();
+  const blockRef = chores.getBlockRef(__filename, packageName);
+
+  const sandboxConfig = standardizeConfig(params.sandboxConfig);
+
+  const subWebServers = {};
+  lodash.forOwn(sandboxConfig.entrypoints, function(value, key) {
+    subWebServers[key] = new SubWebServer({ blockRef, L, T, sandboxConfig: value });
+  });
+
+  function getSubWebServer (dock) {
+    dock = dock || "default";
+    return subWebServers[dock]
+  }
+
+  this.getPort = function () {
+    return getSubWebServer().getPort();
+  };
+
+  this.getHost = function () {
+    return getSubWebServer().getHost();
+  };
+
+  // @Deprecated
+  Object.defineProperty(this, "ssl", {
+    get: function() {
+      return lodash.assign({}, getSubWebServer().ssl);
+    },
+    set: function(value) {}
+  });
+
+  // @Deprecated
+  Object.defineProperty(this, "server", {
+    get: function() {
+      return getSubWebServer().server;
+    },
+    set: function(value) {}
+  });
+
+  this.attach = this.register = function(outlet) {
+    getSubWebServer().attach(outlet);
+  };
+
+  this.detach = this.unregister = function(outlet) {
+    getSubWebServer().detach(outlet);
+  };
+
+  this.start = function() {
+    return getSubWebServer().start();
+  };
+
+  this.stop = function() {
+    return getSubWebServer().stop();
+  };
 
   this.getServiceInfo = function() {
+    const host = getSubWebServer().getHost();
+    const port = getSubWebServer().getPort();
     return {
       webserver_host: host,
       webserver_port: port
@@ -176,6 +234,27 @@ function WebserverTrigger (params = {}) {
 }
 
 module.exports = WebserverTrigger;
+
+function standardizeConfig (sandboxConfig) {
+  if (!lodash.has(sandboxConfig, "entrypoints")) {
+    lodash.set(sandboxConfig, "entrypoints", {});
+  }
+  const entrypoints = lodash.get(sandboxConfig, "entrypoints", {});
+  //
+  const defaultEntrypoints = lodash.pick(sandboxConfig, [
+    "enabled", "host", "port", "ssl"
+  ]);
+  //
+  if (lodash.has(entrypoints, "default")) {
+    lodash.merge(entrypoints.default, defaultEntrypoints);
+  } else {
+    lodash.set(entrypoints, "default", defaultEntrypoints);
+  }
+  //
+  return lodash.omit(sandboxConfig, [
+    "enabled", "host", "port", "ssl"
+  ]);
+}
 
 function extractConfigAddress (sandboxConfig) {
   let port = 7979;
