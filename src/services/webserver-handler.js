@@ -29,25 +29,25 @@ function WebserverHandler (params = {}) {
     return lodash.keys(subWebServers);
   }
 
-  this.getSubWebServer = function(runletName) {
+  this.getRunlet = function(runletName) {
     runletName = runletName || "default";
     return subWebServers[runletName]
   }
 
   this.attach = this.register = function(outlet, runletName) {
-    this.getSubWebServer(runletName).attach(outlet);
+    this.getRunlet(runletName).attach(outlet);
   };
 
   this.detach = this.unregister = function(outlet, runletName) {
-    this.getSubWebServer(runletName).detach(outlet);
+    this.getRunlet(runletName).detach(outlet);
   };
 
   this.start = function() {
-    return this.getSubWebServer().start();
+    return this.getRunlet().start();
   };
 
   this.stop = function() {
-    return this.getSubWebServer().stop();
+    return this.getRunlet().stop();
   };
 }
 

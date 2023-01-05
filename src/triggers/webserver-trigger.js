@@ -12,17 +12,17 @@ function WebserverTrigger (params = {}) {
   const T = loggingFactory.getTracer();
 
   this.getPort = function () {
-    return webserverHandler.getSubWebServer().getPort();
+    return webserverHandler.getRunlet().getPort();
   };
 
   this.getHost = function () {
-    return webserverHandler.getSubWebServer().getHost();
+    return webserverHandler.getRunlet().getHost();
   };
 
   // @Deprecated
   Object.defineProperty(this, "ssl", {
     get: function() {
-      return lodash.assign({}, webserverHandler.getSubWebServer().ssl);
+      return lodash.assign({}, webserverHandler.getRunlet().ssl);
     },
     set: function(value) {}
   });
@@ -30,17 +30,17 @@ function WebserverTrigger (params = {}) {
   // @Deprecated
   Object.defineProperty(this, "server", {
     get: function() {
-      return webserverHandler.getSubWebServer().server;
+      return webserverHandler.getRunlet().server;
     },
     set: function(value) {}
   });
 
   this.attach = this.register = function(outlet) {
-    webserverHandler.getSubWebServer().attach(outlet);
+    webserverHandler.getRunlet().attach(outlet);
   };
 
   this.detach = this.unregister = function(outlet) {
-    webserverHandler.getSubWebServer().detach(outlet);
+    webserverHandler.getRunlet().detach(outlet);
   };
 
   this.start = function() {
@@ -52,8 +52,8 @@ function WebserverTrigger (params = {}) {
   };
 
   this.getServiceInfo = function() {
-    const host = webserverHandler.getSubWebServer().getHost();
-    const port = webserverHandler.getSubWebServer().getPort();
+    const host = webserverHandler.getRunlet().getHost();
+    const port = webserverHandler.getRunlet().getPort();
     return {
       webserver_host: host,
       webserver_port: port
