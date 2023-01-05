@@ -1,19 +1,19 @@
 "use strict";
 
-var express = require("express");
+const express = require("express");
 
 function Service (params) {
   params = params || {};
 
-  var L = params.loggingFactory.getLogger();
-  var T = params.loggingFactory.getTracer();
-  var webserverTrigger = params.webserverTrigger;
+  const L = params.loggingFactory.getLogger();
+  const T = params.loggingFactory.getTracer();
+  const webserverTrigger = params.webserverTrigger;
 
-  var pluginCfg = params.sandboxConfig;
+  const pluginCfg = params.sandboxConfig;
   L.has("silly") && L.log("silly", "configuration: %s", JSON.stringify(pluginCfg));
 
   if (pluginCfg.enabled !== false) {
-    var app = express();
+    const app = express();
 
     app.use("*", function(req, res, next) {
       process.nextTick(function() {
@@ -38,7 +38,7 @@ function Service (params) {
       });
     });
 
-    webserverTrigger.server.on("request", app);
+    webserverTrigger.attach(app);
   }
 }
 
