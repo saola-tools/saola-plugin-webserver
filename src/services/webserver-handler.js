@@ -6,6 +6,7 @@ const https = require("https");
 const path = require("path");
 
 const Devebot = require("devebot");
+const Promise = Devebot.require("bluebird");
 const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");
 
@@ -42,12 +43,42 @@ function WebserverHandler (params = {}) {
     this.getRunlet(runletName).detach(outlet);
   };
 
-  this.start = function() {
-    return this.getRunlet().start();
+  this.start = function(runletNames) {
+    return this.eachRunlets(function(runlet) {
+      return runlet.start();
+    }, runletNames);
   };
 
-  this.stop = function() {
-    return this.getRunlet().stop();
+  this.stop = function(runletNames) {
+    return this.eachRunlets(function(runlet) {
+      return runlet.stop();
+    }, runletNames);
+  };
+
+  this.eachRunlets = function(iteratee, runletNames, options) {
+    if (lodash.isNil(runletNames)) {
+      runletNames = this.getRunletNames();
+    }
+    if (lodash.isString(runletNames)) {
+      runletNames = [runletNames];
+    }
+    if (runletNames && !lodash.isArray(runletNames)) {
+      return Promise.reject();
+    }
+    //
+    if (!lodash.isFunction(iteratee)) {
+      return Promise.reject();
+    };
+    //
+    const selectedRunlets = [];
+    for (const runletName of runletNames) {
+      const selectedRunlet = subWebServers[runletName];
+      if (selectedRunlet) {
+        selectedRunlets.push(selectedRunlet);
+      }
+    }
+    //
+    return Promise.mapSeries(selectedRunlets, iteratee);
   };
 }
 

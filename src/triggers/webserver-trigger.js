@@ -11,10 +11,12 @@ function WebserverTrigger (params = {}) {
   const L = loggingFactory.getLogger();
   const T = loggingFactory.getTracer();
 
+  // @Deprecated
   this.getPort = function () {
     return webserverHandler.getRunlet().getPort();
   };
 
+  // @Deprecated
   this.getHost = function () {
     return webserverHandler.getRunlet().getHost();
   };
@@ -35,10 +37,12 @@ function WebserverTrigger (params = {}) {
     set: function(value) {}
   });
 
+  // @Deprecated
   this.attach = this.register = function(outlet) {
     webserverHandler.getRunlet().attach(outlet);
   };
 
+  // @Deprecated
   this.detach = this.unregister = function(outlet) {
     webserverHandler.getRunlet().detach(outlet);
   };
