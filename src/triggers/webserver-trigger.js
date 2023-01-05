@@ -1,12 +1,13 @@
 "use strict";
 
+const fs = require("fs");
+const http = require("http");
+const https = require("https");
+const path = require("path");
+
 const Devebot = require("devebot");
 const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");
-const fs = require("fs");
-const path = require("path");
-const http = require("http");
-const https = require("https");
 
 const SERVER_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"];
 
@@ -51,18 +52,18 @@ function WebserverTrigger (params = {}) {
   });
 
   this.attach = this.register = function(outlet) {
-    L.has("silly") && L.log("silly", T.toMessage({
+    L && L.has("silly") && L.log("silly", T && T.toMessage({
       tags: [ blockRef, "attach", "begin" ],
       text: "attach() - try to register a outlet"
     }));
     if (server.listeners("request").indexOf(outlet) >= 0) {
-      L.has("silly") && L.log("silly", T.toMessage({
+      L && L.has("silly") && L.log("silly", T && T.toMessage({
         tags: [ blockRef, "attach", "skip" ],
         text: "attach() - outlet has already attached. skip!"
       }));
     } else {
       server.addListener("request", outlet);
-      L.has("silly") && L.log("silly", T.toMessage({
+      L && L.has("silly") && L.log("silly", T && T.toMessage({
         tags: [ blockRef, "attach", "done" ],
         text: "attach() - attach the outlet"
       }));
@@ -70,18 +71,18 @@ function WebserverTrigger (params = {}) {
   };
 
   this.detach = this.unregister = function(outlet) {
-    L.has("silly") && L.log("silly", T.toMessage({
+    L && L.has("silly") && L.log("silly", T && T.toMessage({
       tags: [ blockRef, "detach", "begin" ],
       text: "detach() - try to unregister a outlet"
     }));
     if (server.listeners("request").indexOf(outlet) >= 0) {
       server.removeListener("request", outlet);
-      L.has("silly") && L.log("silly", T.toMessage({
+      L && L.has("silly") && L.log("silly", T && T.toMessage({
         tags: [ blockRef, "detach", "done" ],
         text: "detach() - detach the outlet"
       }));
     } else {
-      L.has("silly") && L.log("silly", T.toMessage({
+      L && L.has("silly") && L.log("silly", T && T.toMessage({
         tags: [ blockRef, "detach", "skip" ],
         text: "detach() - outlet is not available. skip!"
       }));
@@ -91,19 +92,32 @@ function WebserverTrigger (params = {}) {
   this.start = function() {
     if (sandboxConfig.enabled === false) return Promise.resolve();
     return new Promise(function(resolve, reject) {
-      L.has("silly") && L.log("silly", T.add({ protocol, host, port }).toMessage({
+      L && L.has("silly") && L.log("silly", T && T.add({ protocol, host, port }).toMessage({
         tags: [ blockRef, "webserver", "starting" ],
         text: "webserver is starting"
       }));
+      //
+      server.once("error", function (err) {
+        L && L.has("silly") && L.log("silly", T && T.add(lodash.pick(err, ["name", "message"])).toMessage({
+          tags: [ blockRef, "webserver", "error" ],
+          text: "webserver start failed with the Error[${name}]: ${message}"
+        }));
+        if (err) {
+          return reject(err);
+        }
+      });
+      // If port is omitted or is 0, the operating system will assign an arbitrary unused port
+      // If host is omitted, the server will accept connections on the unspecified IPv4 address (0.0.0.0)
       const serverInstance = server.listen.apply(server, buildListenArgs(port, host, function () {
         port = serverInstance.address().port;
         host = serverInstance.address().address;
         chores.isVerboseForced("webserver", sandboxConfig) &&
             console.log("webserver is listening on %s://%s:%s", protocol, host, port);
-        L.has("silly") && L.log("silly", T.toMessage({
+        L && L.has("silly") && L.log("silly", T && T.toMessage({
           tags: [ blockRef, "webserver", "started" ],
           text: "webserver has started"
         }));
+        //
         resolve(serverInstance);
       }));
     });
@@ -112,7 +126,7 @@ function WebserverTrigger (params = {}) {
   this.stop = function() {
     if (sandboxConfig.enabled === false) return Promise.resolve();
     return new Promise(function(resolve, reject) {
-      L.has("silly") && L.log("silly", T.add({ protocol, host, port }).toMessage({
+      L && L.has("silly") && L.log("silly", T && T.add({ protocol, host, port }).toMessage({
         tags: [ blockRef, "webserver", "stopping" ],
         text: "webserver is stopping"
       }));
@@ -121,13 +135,13 @@ function WebserverTrigger (params = {}) {
             console.log("webserver has been closed");
         // https://nodejs.org/api/net.html#net_server_close_callback
         if (err) {
-          L.has("error") && L.log("error", T.toMessage({
+          L && L.has("error") && L.log("error", T && T.toMessage({
             tags: [ blockRef, "webserver", "stopped" ],
             text: "the webserver was not open when it was closed"
           }));
           reject(err);
         } else {
-          L.has("silly") && L.log("silly", T.toMessage({
+          L && L.has("silly") && L.log("silly", T && T.toMessage({
             tags: [ blockRef, "webserver", "stopped" ],
             text: "the webserver has stopped successfully"
           }));
@@ -191,7 +205,7 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
   const { L, T, blockRef } = ctx;
   const ssl = { available: false };
   if (serverCfg.ssl && serverCfg.ssl.enabled) {
-    L.has("silly") && L.log("silly", T.add({
+    L && L.has("silly") && L.log("silly", T && T.add({
       sslConfig: serverCfg.ssl
     }).toMessage({
       tags: [ blockRef, "ssl", "enabled" ],
@@ -202,7 +216,7 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
     try {
       ssl.ca = ssl.ca || readFileSync(serverCfg.ssl.ca_file);
     } catch (error) {
-      L.has("silly") && L.log("silly", T.add({
+      L && L.has("silly") && L.log("silly", T && T.add({
         ca: ssl.ca,
         ca_file: serverCfg.ssl.ca_file,
         error: error
@@ -218,7 +232,7 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
       ssl.key = ssl.key || readFileSync(serverCfg.ssl.key_file);
       ssl.cert = ssl.cert || readFileSync(serverCfg.ssl.cert_file);
     } catch (error) {
-      L.has("silly") && L.log("silly", T.add({
+      L && L.has("silly") && L.log("silly", T && T.add({
         key: ssl.key,
         key_file: serverCfg.ssl.key_file,
         cert: ssl.cert,
@@ -231,7 +245,7 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
     }
 
     if (!ssl.key && !ssl.cert && isLocalhost) {
-      L.has("silly") && L.log("silly", T.toMessage({
+      L && L.has("silly") && L.log("silly", T && T.toMessage({
         tags: [ blockRef, "ssl", "key-cert-use-default" ],
         text: "Using default key/cert for localhost"
       }));
@@ -241,13 +255,13 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
 
     if (ssl.key && ssl.cert) {
       ssl.available = true;
-      L.has("silly") && L.log("silly", T.add({ ssl }).toMessage({
+      L && L.has("silly") && L.log("silly", T && T.add({ ssl }).toMessage({
         tags: [ blockRef, "ssl", "available" ],
         text: "HTTPs is available"
       }));
     }
   } else {
-    L.has("silly") && L.log("silly", T.toMessage({
+    L && L.has("silly") && L.log("silly", T && T.toMessage({
       tags: [ blockRef, "ssl", "disabled" ],
       text: "SSL is disabled"
     }));

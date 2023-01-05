@@ -50,7 +50,13 @@ module.exports = {
               },
               "cert_file": {
                 "type": "string"
-              }
+              },
+              "requestCert": {
+                "type": "boolean"
+              },
+              "rejectUnauthorized": {
+                "type": "boolean"
+              },
             }
           },
           "verbose": {
