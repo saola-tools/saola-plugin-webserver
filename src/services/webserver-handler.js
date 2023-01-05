@@ -21,21 +21,33 @@ function WebserverHandler (params = {}) {
   const sandboxConfig = standardizeConfig(params.sandboxConfig);
 
   const subWebServers = {};
-  lodash.forOwn(sandboxConfig.entrypoints, function(value, key) {
+  lodash.forOwn(sandboxConfig.runlets, function(value, key) {
     subWebServers[key] = new SubWebServer({ blockRef, L, T, sandboxConfig: value });
   });
 
-  this.getSubWebServer = function(siteName) {
-    siteName = siteName || "default";
-    return subWebServers[siteName]
+  this.getRunletNames = function() {
+    return lodash.keys(subWebServers);
   }
 
-  this.attach = this.register = function(outlet, siteName) {
-    this.getSubWebServer(siteName).attach(outlet);
+  this.getSubWebServer = function(runletName) {
+    runletName = runletName || "default";
+    return subWebServers[runletName]
+  }
+
+  this.attach = this.register = function(outlet, runletName) {
+    this.getSubWebServer(runletName).attach(outlet);
   };
 
-  this.detach = this.unregister = function(outlet, siteName) {
-    this.getSubWebServer(siteName).detach(outlet);
+  this.detach = this.unregister = function(outlet, runletName) {
+    this.getSubWebServer(runletName).detach(outlet);
+  };
+
+  this.start = function() {
+    return this.getSubWebServer().start();
+  };
+
+  this.stop = function() {
+    return this.getSubWebServer().stop();
   };
 }
 
@@ -183,19 +195,19 @@ WebserverHandler.referenceHash = {
 module.exports = WebserverHandler;
 
 function standardizeConfig (sandboxConfig) {
-  if (!lodash.has(sandboxConfig, "entrypoints")) {
-    lodash.set(sandboxConfig, "entrypoints", {});
+  if (!lodash.has(sandboxConfig, "runlets")) {
+    lodash.set(sandboxConfig, "runlets", {});
   }
-  const entrypoints = lodash.get(sandboxConfig, "entrypoints", {});
+  const runlets = lodash.get(sandboxConfig, "runlets", {});
   //
   const defaultEntrypoints = lodash.pick(sandboxConfig, [
     "enabled", "host", "port", "ssl"
   ]);
   //
-  if (lodash.has(entrypoints, "default")) {
-    lodash.merge(entrypoints.default, defaultEntrypoints);
+  if (lodash.has(runlets, "default")) {
+    lodash.merge(runlets.default, defaultEntrypoints);
   } else {
-    lodash.set(entrypoints, "default", defaultEntrypoints);
+    lodash.set(runlets, "default", defaultEntrypoints);
   }
   //
   return lodash.omit(sandboxConfig, [

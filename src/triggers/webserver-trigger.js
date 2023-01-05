@@ -44,11 +44,11 @@ function WebserverTrigger (params = {}) {
   };
 
   this.start = function() {
-    return webserverHandler.getSubWebServer().start();
+    return webserverHandler.start();
   };
 
   this.stop = function() {
-    return webserverHandler.getSubWebServer().stop();
+    return webserverHandler.stop();
   };
 
   this.getServiceInfo = function() {
