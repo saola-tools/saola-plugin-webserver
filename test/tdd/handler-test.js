@@ -11,23 +11,23 @@ const { assert, mockit } = require("liberica");
 const path = require("path");
 const util = require("util");
 
-const serviceLocation = { libraryDir: "../lib", moduleType: "triggers" };
+const serviceLocation = { libraryDir: "../lib", moduleType: "services" };
 
-describe("webserverTrigger", function() {
+describe("webserverHandler", function() {
   const sandboxConfig = {};
 
   const loggingFactory = mockit.createLoggingFactoryMock({ captureMethodCall: false });
   const ctx = {
     L: loggingFactory.getLogger(),
     T: loggingFactory.getTracer(),
-    blockRef: "app-webserver/webserverTrigger",
+    blockRef: "app-webserver/webserverHandler",
   };
 
   describe("standardizeConfig()", function() {
     let Handler, standardizeConfig;
 
     beforeEach(function() {
-      Handler = mockit.acquire("webserver-trigger", serviceLocation);
+      Handler = mockit.acquire("webserver-handler", serviceLocation);
       standardizeConfig = mockit.get(Handler, "standardizeConfig");
     });
 
