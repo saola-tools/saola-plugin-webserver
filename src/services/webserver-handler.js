@@ -10,6 +10,7 @@ const Promise = Devebot.require("bluebird");
 const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");
 
+const DEFAULT_RUNLET_NAME = "default";
 const SERVER_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"];
 
 function WebserverHandler (params = {}) {
@@ -21,26 +22,33 @@ function WebserverHandler (params = {}) {
 
   const sandboxConfig = standardizeConfig(params.sandboxConfig);
 
-  const subWebServers = {};
+  const refRunletServers = {};
   lodash.forOwn(sandboxConfig.runlets, function(value, key) {
-    subWebServers[key] = new SubWebServer({ blockRef, L, T, sandboxConfig: value });
+    refRunletServers[key] = new RunletServer({ blockRef, L, T, sandboxConfig: value });
   });
 
   this.getRunletNames = function() {
-    return lodash.keys(subWebServers);
+    return lodash.keys(refRunletServers);
+  }
+
+  this.hasRunlet = function(runletName) {
+    runletName = runletName || DEFAULT_RUNLET_NAME;
+    return runletName in refRunletServers;
   }
 
   this.getRunlet = function(runletName) {
-    runletName = runletName || "default";
-    return subWebServers[runletName]
+    runletName = runletName || DEFAULT_RUNLET_NAME;
+    return refRunletServers[runletName]
   }
 
   this.attach = this.register = function(outlet, runletName) {
-    this.getRunlet(runletName).attach(outlet);
+    const runlet = this.getRunlet(runletName);
+    runlet && runlet.attach(outlet);
   };
 
   this.detach = this.unregister = function(outlet, runletName) {
-    this.getRunlet(runletName).detach(outlet);
+    const runlet = this.getRunlet(runletName);
+    runlet && runlet.detach(outlet);
   };
 
   this.start = function(runletNames) {
@@ -72,7 +80,7 @@ function WebserverHandler (params = {}) {
     //
     const selectedRunlets = [];
     for (const runletName of runletNames) {
-      const selectedRunlet = subWebServers[runletName];
+      const selectedRunlet = refRunletServers[runletName];
       if (selectedRunlet) {
         selectedRunlets.push(selectedRunlet);
       }
@@ -82,7 +90,7 @@ function WebserverHandler (params = {}) {
   };
 }
 
-function SubWebServer (params = {}) {
+function RunletServer (params = {}) {
   const { blockRef, sandboxConfig, L, T } = params;
 
   let { port, host } = extractConfigAddress(sandboxConfig);
@@ -231,14 +239,14 @@ function standardizeConfig (sandboxConfig) {
   }
   const runlets = lodash.get(sandboxConfig, "runlets", {});
   //
-  const defaultEntrypoints = lodash.pick(sandboxConfig, [
+  const defaultRunletConfig = lodash.pick(sandboxConfig, [
     "enabled", "host", "port", "ssl"
   ]);
   //
-  if (lodash.has(runlets, "default")) {
-    lodash.merge(runlets.default, defaultEntrypoints);
+  if (lodash.has(runlets, DEFAULT_RUNLET_NAME)) {
+    lodash.merge(runlets.default, defaultRunletConfig);
   } else {
-    lodash.set(runlets, "default", defaultEntrypoints);
+    lodash.set(runlets, DEFAULT_RUNLET_NAME, defaultRunletConfig);
   }
   //
   return lodash.omit(sandboxConfig, [

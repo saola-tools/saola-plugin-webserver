@@ -58,9 +58,9 @@ describe("app-webserver", function() {
     });
     //
     it("raise a [EADDRINUSE] error if the port already in use", function() {
-      return app.server.start()
+      return example.server.start()
         .then(function() {
-          return example.server.start()
+          return app.server.start()
             .then(function() {
               assert.fail("This testcase must raise an error");
             })
@@ -71,7 +71,7 @@ describe("app-webserver", function() {
             });
         })
         .finally(function() {
-          return app.server.stop();
+          return example.server.stop();
         });
     });
   });
