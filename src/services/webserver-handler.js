@@ -11,6 +11,8 @@ const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");
 
 const DEFAULT_RUNLET_NAME = "default";
+const RUNLETS_COLLECTION_NAME = "runlets";
+
 const SERVER_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"];
 
 function WebserverHandler (params = {}) {
@@ -233,25 +235,25 @@ WebserverHandler.referenceHash = {
 
 module.exports = WebserverHandler;
 
-function standardizeConfig (sandboxConfig) {
-  if (!lodash.has(sandboxConfig, "runlets")) {
-    lodash.set(sandboxConfig, "runlets", {});
+function standardizeConfig (sandboxConfig, globalFieldNames) {
+  globalFieldNames = globalFieldNames || [];
+  if (!globalFieldNames.includes(RUNLETS_COLLECTION_NAME)) {
+    globalFieldNames.push(RUNLETS_COLLECTION_NAME);
   }
-  const runlets = lodash.get(sandboxConfig, "runlets", {});
+  if (!lodash.has(sandboxConfig, RUNLETS_COLLECTION_NAME)) {
+    lodash.set(sandboxConfig, RUNLETS_COLLECTION_NAME, {});
+  }
+  const runlets = lodash.get(sandboxConfig, RUNLETS_COLLECTION_NAME);
   //
-  const defaultRunletConfig = lodash.pick(sandboxConfig, [
-    "enabled", "host", "port", "ssl"
-  ]);
+  const globalRunletConfig = lodash.omit(sandboxConfig, globalFieldNames);
   //
   if (lodash.has(runlets, DEFAULT_RUNLET_NAME)) {
-    lodash.merge(runlets.default, defaultRunletConfig);
+    lodash.merge(runlets[DEFAULT_RUNLET_NAME], globalRunletConfig);
   } else {
-    lodash.set(runlets, DEFAULT_RUNLET_NAME, defaultRunletConfig);
+    lodash.set(runlets, DEFAULT_RUNLET_NAME, globalRunletConfig);
   }
   //
-  return lodash.omit(sandboxConfig, [
-    "enabled", "host", "port", "ssl"
-  ]);
+  return lodash.omit(sandboxConfig, lodash.keys(globalRunletConfig));
 }
 
 function extractConfigAddress (sandboxConfig) {
