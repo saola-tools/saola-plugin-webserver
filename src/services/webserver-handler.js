@@ -30,17 +30,17 @@ function WebserverHandler (params = {}) {
 
   this.getRunletNames = function() {
     return lodash.keys(refRunletServers);
-  }
+  };
 
   this.hasRunlet = function(runletName) {
     runletName = runletName || DEFAULT_RUNLET_NAME;
     return runletName in refRunletServers;
-  }
+  };
 
   this.getRunlet = function(runletName) {
     runletName = runletName || DEFAULT_RUNLET_NAME;
-    return refRunletServers[runletName]
-  }
+    return refRunletServers[runletName];
+  };
 
   this.attach = this.register = function(outlet, runletName) {
     const runlet = this.getRunlet(runletName);
@@ -77,7 +77,7 @@ function WebserverHandler (params = {}) {
     //
     if (!lodash.isFunction(iteratee)) {
       return Promise.reject();
-    };
+    }
     //
     const selectedRunlets = [];
     for (const runletName of runletNames) {

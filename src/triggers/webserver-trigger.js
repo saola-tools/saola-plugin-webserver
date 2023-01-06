@@ -48,10 +48,18 @@ function WebserverTrigger (params = {}) {
   };
 
   this.start = function() {
+    L && L.has("silly") && L.log("silly", T && T.add({ blockRef }).toMessage({
+      tags: [ blockRef, "trigger-starting" ],
+      text: " - trigger[${blockRef}] is starting"
+    }));
     return webserverHandler.start();
   };
 
   this.stop = function() {
+    L && L.has("silly") && L.log("silly", T && T.add({ blockRef }).toMessage({
+      tags: [ blockRef, "trigger-stopping" ],
+      text: " - trigger[${blockRef}] is stopping"
+    }));
     return webserverHandler.stop();
   };
 
