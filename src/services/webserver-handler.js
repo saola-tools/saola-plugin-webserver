@@ -10,7 +10,7 @@ const Promise = Devebot.require("bluebird");
 const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");
 
-const { DEFAULT_RUNLET_NAME, standardizeConfig } = require("../supports/runlet");
+const { DEFAULT_PORTLET_NAME, standardizeConfig } = require("../supports/portlet");
 
 const SERVER_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"];
 
@@ -23,55 +23,55 @@ function WebserverHandler (params = {}) {
 
   const sandboxConfig = standardizeConfig(params.sandboxConfig);
 
-  const refRunletServers = {};
-  lodash.forOwn(sandboxConfig.runlets, function(value, key) {
-    refRunletServers[key] = new RunletServer({ blockRef, L, T, sandboxConfig: value });
+  const _portlets = {};
+  lodash.forOwn(sandboxConfig.portlets, function(value, key) {
+    _portlets[key] = new WebserverConduit({ blockRef, L, T, portletConfig: value });
   });
 
-  this.getRunletNames = function() {
-    return lodash.keys(refRunletServers);
+  this.getPortletNames = function() {
+    return lodash.keys(_portlets);
   };
 
-  this.hasRunlet = function(runletName) {
-    runletName = runletName || DEFAULT_RUNLET_NAME;
-    return runletName in refRunletServers;
+  this.hasPortlet = function(portletName) {
+    portletName = portletName || DEFAULT_PORTLET_NAME;
+    return portletName in _portlets;
   };
 
-  this.getRunlet = function(runletName) {
-    runletName = runletName || DEFAULT_RUNLET_NAME;
-    return refRunletServers[runletName];
+  this.getPortlet = function(portletName) {
+    portletName = portletName || DEFAULT_PORTLET_NAME;
+    return _portlets[portletName];
   };
 
-  this.attach = this.register = function(outlet, runletName) {
-    const runlet = this.getRunlet(runletName);
-    runlet && runlet.attach(outlet);
+  this.attach = this.register = function(outlet, portletName) {
+    const portlet = this.getPortlet(portletName);
+    portlet && portlet.attach(outlet);
   };
 
-  this.detach = this.unregister = function(outlet, runletName) {
-    const runlet = this.getRunlet(runletName);
-    runlet && runlet.detach(outlet);
+  this.detach = this.unregister = function(outlet, portletName) {
+    const portlet = this.getPortlet(portletName);
+    portlet && portlet.detach(outlet);
   };
 
-  this.start = function(runletNames) {
-    return this.eachRunlets(function(runlet) {
-      return runlet.start();
-    }, runletNames);
+  this.start = function(portletNames) {
+    return this.eachPortlets(function(portlet) {
+      return portlet.start();
+    }, portletNames);
   };
 
-  this.stop = function(runletNames) {
-    return this.eachRunlets(function(runlet) {
-      return runlet.stop();
-    }, runletNames);
+  this.stop = function(portletNames) {
+    return this.eachPortlets(function(portlet) {
+      return portlet.stop();
+    }, portletNames);
   };
 
-  this.eachRunlets = function(iteratee, runletNames, options) {
-    if (lodash.isNil(runletNames)) {
-      runletNames = this.getRunletNames();
+  this.eachPortlets = function(iteratee, portletNames, options) {
+    if (lodash.isNil(portletNames)) {
+      portletNames = this.getPortletNames();
     }
-    if (lodash.isString(runletNames)) {
-      runletNames = [runletNames];
+    if (lodash.isString(portletNames)) {
+      portletNames = [portletNames];
     }
-    if (runletNames && !lodash.isArray(runletNames)) {
+    if (portletNames && !lodash.isArray(portletNames)) {
       return Promise.reject();
     }
     //
@@ -79,56 +79,64 @@ function WebserverHandler (params = {}) {
       return Promise.reject();
     }
     //
-    const selectedRunlets = [];
-    for (const runletName of runletNames) {
-      const selectedRunlet = refRunletServers[runletName];
-      if (selectedRunlet) {
-        selectedRunlets.push(selectedRunlet);
+    const selectedPortlets = [];
+    for (const portletName of portletNames) {
+      const selectedPortlet = _portlets[portletName];
+      if (selectedPortlet) {
+        selectedPortlets.push(selectedPortlet);
       }
     }
     //
-    return Promise.mapSeries(selectedRunlets, iteratee);
+    return Promise.mapSeries(selectedPortlets, iteratee);
   };
 }
 
-function RunletServer (params = {}) {
-  const { blockRef, sandboxConfig, L, T } = params;
+class WebserverConduit {
+  constructor (params = {}) {
+    const { blockRef, portletConfig, L, T } = params;
 
-  let { port, host } = extractConfigAddress(sandboxConfig);
+    let { port, host } = extractConfigAddress(portletConfig);
 
-  this.getPort = function () {
-    return port;
-  };
+    this.getPort = function () {
+      return port;
+    };
 
-  this.getHost = function () {
-    return host;
-  };
+    this.getHost = function () {
+      return host;
+    };
 
-  const isLocalhost = SERVER_HOSTS.indexOf(host) >= 0;
-  const ssl = loadSSLConfig({ L, T, blockRef }, sandboxConfig, isLocalhost);
+    const isLocalhost = SERVER_HOSTS.indexOf(host) >= 0;
+    const ssl = loadSSLConfig({ L, T, blockRef }, portletConfig, isLocalhost);
 
-  Object.defineProperty(this, "ssl", {
-    get: function() { return lodash.assign({}, ssl); },
-    set: function(value) {}
-  });
+    const protocol = ssl.available ? "https" : "http";
 
-  const protocol = ssl.available ? "https" : "http";
+    const server = ssl.available ? https.createServer({
+      ca: ssl.ca,
+      cert: ssl.cert,
+      key: ssl.key,
+      requestCert: true,
+      rejectUnauthorized: false
+    }) : http.createServer();
 
-  const server = ssl.available ? https.createServer({
-    ca: ssl.ca,
-    cert: ssl.cert,
-    key: ssl.key,
-    requestCert: true,
-    rejectUnauthorized: false
-  }) : http.createServer();
+    // @Deprecated
+    Object.defineProperty(this, "ssl", {
+      get: function() { return lodash.assign({}, ssl); },
+      set: function(value) {}
+    });
 
-  // @Deprecated
-  Object.defineProperty(this, "server", {
-    get: function() { return server; },
-    set: function(value) {}
-  });
+    // @Deprecated
+    Object.defineProperty(this, "server", {
+      get: function() { return server; },
+      set: function(value) {}
+    });
 
-  this.attach = this.register = function(outlet) {
+    //
+    this._store = { blockRef, L, T, portletConfig, server, protocol, port, host };
+  }
+  //
+  attach (outlet) {
+    const { blockRef, L, T, server } = this._store;
+    //
     L && L.has("silly") && L.log("silly", T && T.toMessage({
       tags: [ blockRef, "attach", "begin" ],
       text: "attach() - try to register a outlet"
@@ -145,9 +153,15 @@ function RunletServer (params = {}) {
         text: "attach() - attach the outlet"
       }));
     }
-  };
-
-  this.detach = this.unregister = function(outlet) {
+  }
+  //
+  register (outlet) {
+    return this.attach(outlet);
+  }
+  //
+  detach (outlet) {
+    const { blockRef, L, T, server } = this._store;
+    //
     L && L.has("silly") && L.log("silly", T && T.toMessage({
       tags: [ blockRef, "detach", "begin" ],
       text: "detach() - try to unregister a outlet"
@@ -164,10 +178,17 @@ function RunletServer (params = {}) {
         text: "detach() - outlet is not available. skip!"
       }));
     }
-  };
-
-  this.start = function() {
-    if (sandboxConfig.enabled === false) return Promise.resolve();
+  }
+  //
+  unregister (outlet) {
+    return this.detach(outlet);
+  }
+  //
+  start () {
+    const self = this;
+    const { blockRef, L, T, portletConfig, protocol, host, port, server } = this._store;
+    //
+    if (portletConfig.enabled === false) return Promise.resolve();
     return new Promise(function(resolve, reject) {
       L && L.has("silly") && L.log("silly", T && T.add({ protocol, host, port }).toMessage({
         tags: [ blockRef, "webserver", "starting" ],
@@ -186,29 +207,34 @@ function RunletServer (params = {}) {
       // If port is omitted or is 0, the operating system will assign an arbitrary unused port
       // If host is omitted, the server will accept connections on the unspecified IPv4 address (0.0.0.0)
       const serverInstance = server.listen.apply(server, buildListenArgs(port, host, function () {
-        port = serverInstance.address().port;
-        host = serverInstance.address().address;
-        chores.isVerboseForced("webserver", sandboxConfig) &&
+        const port = serverInstance.address().port;
+        const host = serverInstance.address().address;
+        //
+        chores.isVerboseForced("webserver", portletConfig) &&
             console.log("webserver is listening on %s://%s:%s", protocol, host, port);
         L && L.has("silly") && L.log("silly", T && T.toMessage({
           tags: [ blockRef, "webserver", "started" ],
           text: "webserver has started"
         }));
         //
+        lodash.assign(self._store, { port, host });
+        //
         resolve(serverInstance);
       }));
     });
-  };
-
-  this.stop = function() {
-    if (sandboxConfig.enabled === false) return Promise.resolve();
+  }
+  //
+  stop () {
+    const { blockRef, L, T, portletConfig, protocol, host, port, server } = this._store;
+    //
+    if (portletConfig.enabled === false) return Promise.resolve();
     return new Promise(function(resolve, reject) {
       L && L.has("silly") && L.log("silly", T && T.add({ protocol, host, port }).toMessage({
         tags: [ blockRef, "webserver", "stopping" ],
         text: "webserver is stopping"
       }));
       server.close(function (err) {
-        chores.isVerboseForced("webserver", sandboxConfig) &&
+        chores.isVerboseForced("webserver", portletConfig) &&
             console.log("webserver has been closed");
         // https://nodejs.org/api/net.html#net_server_close_callback
         if (err) {
@@ -226,21 +252,21 @@ function RunletServer (params = {}) {
         }
       });
     });
-  };
+  }
 }
 
 WebserverHandler.referenceHash = {};
 
 module.exports = WebserverHandler;
 
-function extractConfigAddress (sandboxConfig) {
+function extractConfigAddress (portletConfig) {
   let port = 7979;
-  if ("port" in sandboxConfig) {
-    port = sandboxConfig.port;
+  if ("port" in portletConfig) {
+    port = portletConfig.port;
   }
   let host = "0.0.0.0";
-  if ("host" in sandboxConfig) {
-    host = sandboxConfig.host;
+  if ("host" in portletConfig) {
+    host = portletConfig.host;
   }
   return { port, host };
 }

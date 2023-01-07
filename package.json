@@ -33,11 +33,8 @@
     "devebot",
     "devebot-plugin"
   ],
-  "peerDependencies": {
-    "devebot": "^0.4.0"
-  },
   "dependencies": {
-    "devebot": "^0.4.0"
+    "devebot": "^0.4.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.19.3",

@@ -10,10 +10,10 @@ Auto detect the port:
 export DEVEBOT_SANDBOX=autoport
 ```
 
-Start multiple runlets:
+Start multiple portlets:
 
 ```
-export DEVEBOT_SANDBOX=multihost
+export DEVEBOT_SANDBOX=portlets
 ```
 
 Start the server:

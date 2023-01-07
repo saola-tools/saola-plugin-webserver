@@ -1,7 +1,7 @@
 "use strict";
 
 const express = require("express");
-const targetRunlet = "monitor";
+const targetPortlet = "monitor";
 
 function Service (params) {
   params = params || {};
@@ -33,13 +33,13 @@ function Service (params) {
 
     app.get("/monitor/:id", function(req, res) {
       res.status(200).json({
-        port: webserverHandler.getRunlet(targetRunlet).getPort(),
-        host: webserverHandler.getRunlet(targetRunlet).getHost(),
-        message: targetRunlet + " [" + req.params.id + "] request successfully"
+        port: webserverHandler.getPortlet(targetPortlet).getPort(),
+        host: webserverHandler.getPortlet(targetPortlet).getHost(),
+        message: targetPortlet + " [" + req.params.id + "] request successfully"
       });
     });
 
-    webserverHandler.attach(app, targetRunlet);
+    webserverHandler.attach(app, targetPortlet);
   }
 }
 

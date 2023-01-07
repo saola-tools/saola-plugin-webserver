@@ -31,7 +31,7 @@ describe("webserverHandler", function() {
       standardizeConfig = mockit.get(Handler, "standardizeConfig");
     });
 
-    it("convert legacy sandboxConfig fields to the runlets.default", function() {
+    it("convert legacy sandboxConfig fields to the portlets.default", function() {
       assert.isFunction(standardizeConfig);
       //
       const sandboxConfig = {
@@ -39,7 +39,7 @@ describe("webserverHandler", function() {
         "port": 7979
       };
       const expected = {
-        "runlets": {
+        "portlets": {
           "default": {
             "host": "0.0.0.0",
             "port": 7979
@@ -50,13 +50,13 @@ describe("webserverHandler", function() {
       assert.deepEqual(standardizeConfig(sandboxConfig), expected);
     });
 
-    it("merge legacy sandboxConfig fields to the runlets.default if it is exists", function() {
+    it("merge legacy sandboxConfig fields to the portlets.default if it is exists", function() {
       assert.isFunction(standardizeConfig);
       //
       const sandboxConfig = {
         "host": "0.0.0.0",
         "port": 7979,
-        "runlets": {
+        "portlets": {
           "default": {
             "host": "localhost",
             "ssl": {
@@ -66,7 +66,7 @@ describe("webserverHandler", function() {
         }
       };
       const expected = {
-        "runlets": {
+        "portlets": {
           "default": {
             "host": "0.0.0.0",
             "port": 7979,

@@ -1,7 +1,7 @@
 module.exports = {
     plugins: {
       appWebserver: {
-        runlets: {
+        portlets: {
           monitor: {
             host: "localhost",
             port: 17979
@@ -10,4 +10,3 @@ module.exports = {
       }
     }
   };
-  

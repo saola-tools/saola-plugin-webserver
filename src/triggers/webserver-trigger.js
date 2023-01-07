@@ -13,18 +13,18 @@ function WebserverTrigger (params = {}) {
 
   // @Deprecated
   this.getPort = function () {
-    return webserverHandler.getRunlet().getPort();
+    return webserverHandler.getPortlet().getPort();
   };
 
   // @Deprecated
   this.getHost = function () {
-    return webserverHandler.getRunlet().getHost();
+    return webserverHandler.getPortlet().getHost();
   };
 
   // @Deprecated
   Object.defineProperty(this, "ssl", {
     get: function() {
-      return lodash.assign({}, webserverHandler.getRunlet().ssl);
+      return lodash.assign({}, webserverHandler.getPortlet().ssl);
     },
     set: function(value) {}
   });
@@ -32,19 +32,19 @@ function WebserverTrigger (params = {}) {
   // @Deprecated
   Object.defineProperty(this, "server", {
     get: function() {
-      return webserverHandler.getRunlet().server;
+      return webserverHandler.getPortlet().server;
     },
     set: function(value) {}
   });
 
   // @Deprecated
   this.attach = this.register = function(outlet) {
-    webserverHandler.getRunlet().attach(outlet);
+    webserverHandler.getPortlet().attach(outlet);
   };
 
   // @Deprecated
   this.detach = this.unregister = function(outlet) {
-    webserverHandler.getRunlet().detach(outlet);
+    webserverHandler.getPortlet().detach(outlet);
   };
 
   this.start = function() {
@@ -64,8 +64,8 @@ function WebserverTrigger (params = {}) {
   };
 
   this.getServiceInfo = function() {
-    const host = webserverHandler.getRunlet().getHost();
-    const port = webserverHandler.getRunlet().getPort();
+    const host = webserverHandler.getPortlet().getHost();
+    const port = webserverHandler.getPortlet().getPort();
     return {
       webserver_host: host,
       webserver_port: port

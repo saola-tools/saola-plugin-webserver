@@ -4,7 +4,7 @@ const path = require("path");
 const plugin = require("devebot").registerLayerware(__dirname);
 
 const builtinPackages = {
-  "runlet": path.join(__dirname, ".", "lib/supports/runlet"),
+  "portlet": path.join(__dirname, ".", "lib/supports/portlet"),
 };
 
 plugin.require = function(packageName) {
