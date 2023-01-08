@@ -10,37 +10,25 @@ const Promise = Devebot.require("bluebird");
 const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");
 
-const { DEFAULT_PORTLET_NAME, standardizeConfig } = require("../supports/portlet");
+const { portletifyConfig, PortletMixiner } = require("../supports/portlet");
 
 const SERVER_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"];
 
 function WebserverHandler (params = {}) {
-  const { packageName, loggingFactory } = params;
+  const { packageName, loggingFactory, sandboxConfig } = params;
   const blockRef = chores.getBlockRef(__filename, packageName);
 
   const L = loggingFactory.getLogger();
   const T = loggingFactory.getTracer();
 
-  const sandboxConfig = standardizeConfig(params.sandboxConfig);
+  const pluginConfig = portletifyConfig(sandboxConfig);
 
-  const _portlets = {};
-  lodash.forOwn(sandboxConfig.portlets, function(value, key) {
-    _portlets[key] = new WebserverConduit({ blockRef, L, T, portletConfig: value });
+  PortletMixiner.call(this, {
+    pluginConfig,
+    portletForwarder: undefined,
+    portletArguments: { L, T, blockRef },
+    PortletConstructor: WebserverPortlet,
   });
-
-  this.getPortletNames = function() {
-    return lodash.keys(_portlets);
-  };
-
-  this.hasPortlet = function(portletName) {
-    portletName = portletName || DEFAULT_PORTLET_NAME;
-    return portletName in _portlets;
-  };
-
-  this.getPortlet = function(portletName) {
-    portletName = portletName || DEFAULT_PORTLET_NAME;
-    return _portlets[portletName];
-  };
 
   this.attach = this.register = function(outlet, portletName) {
     const portlet = this.getPortlet(portletName);
@@ -63,35 +51,11 @@ function WebserverHandler (params = {}) {
       return portlet.stop();
     }, portletNames);
   };
-
-  this.eachPortlets = function(iteratee, portletNames, options) {
-    if (lodash.isNil(portletNames)) {
-      portletNames = this.getPortletNames();
-    }
-    if (lodash.isString(portletNames)) {
-      portletNames = [portletNames];
-    }
-    if (portletNames && !lodash.isArray(portletNames)) {
-      return Promise.reject();
-    }
-    //
-    if (!lodash.isFunction(iteratee)) {
-      return Promise.reject();
-    }
-    //
-    const selectedPortlets = [];
-    for (const portletName of portletNames) {
-      const selectedPortlet = _portlets[portletName];
-      if (selectedPortlet) {
-        selectedPortlets.push(selectedPortlet);
-      }
-    }
-    //
-    return Promise.mapSeries(selectedPortlets, iteratee);
-  };
 }
 
-class WebserverConduit {
+Object.assign(WebserverHandler.prototype, PortletMixiner.prototype);
+
+class WebserverPortlet {
   constructor (params = {}) {
     const { blockRef, portletConfig, L, T } = params;
 

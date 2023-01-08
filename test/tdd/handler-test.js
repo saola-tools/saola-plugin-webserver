@@ -23,16 +23,16 @@ describe("webserverHandler", function() {
     blockRef: "app-webserver/webserverHandler",
   };
 
-  describe("standardizeConfig()", function() {
-    let Handler, standardizeConfig;
+  describe("portletifyConfig()", function() {
+    let Handler, portletifyConfig;
 
     beforeEach(function() {
       Handler = mockit.acquire("webserver-handler", serviceLocation);
-      standardizeConfig = mockit.get(Handler, "standardizeConfig");
+      portletifyConfig = mockit.get(Handler, "portletifyConfig");
     });
 
     it("convert legacy sandboxConfig fields to the portlets.default", function() {
-      assert.isFunction(standardizeConfig);
+      assert.isFunction(portletifyConfig);
       //
       const sandboxConfig = {
         "host": "0.0.0.0",
@@ -47,11 +47,11 @@ describe("webserverHandler", function() {
         }
       };
       //
-      assert.deepEqual(standardizeConfig(sandboxConfig), expected);
+      assert.deepEqual(portletifyConfig(sandboxConfig), expected);
     });
 
     it("merge legacy sandboxConfig fields to the portlets.default if it is exists", function() {
-      assert.isFunction(standardizeConfig);
+      assert.isFunction(portletifyConfig);
       //
       const sandboxConfig = {
         "host": "0.0.0.0",
@@ -77,7 +77,7 @@ describe("webserverHandler", function() {
         }
       };
       //
-      assert.deepEqual(standardizeConfig(sandboxConfig), expected);
+      assert.deepEqual(portletifyConfig(sandboxConfig), expected);
     });
   });
 });

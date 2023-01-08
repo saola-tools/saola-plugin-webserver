@@ -21,11 +21,15 @@ Start the server:
 ```shell
 export DEBUG=devebot*,app*
 export LOGOLITE_DEBUGLOG_ENABLED=true
-node test/example
+node test/app/example
 ```
 
 ```curl
 curl http://0.0.0.0:7979/example/1234567890
+```
+
+```curl
+curl http://localhost:17979/monitor/1234567890
 ```
 
 ## Notes
