@@ -50,6 +50,31 @@ describe("webserverHandler", function() {
       assert.deepEqual(portletifyConfig(sandboxConfig), expected);
     });
 
+    it("convert legacy sandboxConfig fields to the portlets.default, keep the portletMappings field", function() {
+      assert.isFunction(portletifyConfig);
+      //
+      const sandboxConfig = {
+        "host": "0.0.0.0",
+        "port": 7979,
+        "portletMappings": {
+          "watchdog": "monitor"
+        }
+      };
+      const expected = {
+        "portlets": {
+          "default": {
+            "host": "0.0.0.0",
+            "port": 7979
+          }
+        },
+        "portletMappings": {
+          "watchdog": "monitor"
+        }
+      };
+      //
+      assert.deepEqual(portletifyConfig(sandboxConfig), expected);
+    });
+
     it("skip converting legacy sandboxConfig fields when the portlets is not empty", function() {
       assert.isFunction(portletifyConfig);
       //

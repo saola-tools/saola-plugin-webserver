@@ -6,8 +6,19 @@ const lodash = Devebot.require("lodash");
 
 const DEFAULT_PORTLET_NAME = "default";
 const PORTLETS_COLLECTION_NAME = "portlets";
+const PORTLETS_MAPPINGS_NAME = "portletMappings";
 
 function portletifyConfig (sandboxConfig, globalFieldNames) {
+  if (!lodash.isPlainObject(sandboxConfig)) {
+    throw newError("InvalidSandboxConfigError", {
+      message: "sandboxConfig must be an object",
+      payload: {
+        sandboxConfigType: typeof sandboxConfig,
+        sandboxConfig,
+      }
+    });
+  }
+  //
   if (!lodash.has(sandboxConfig, PORTLETS_COLLECTION_NAME)) {
     lodash.set(sandboxConfig, PORTLETS_COLLECTION_NAME, {});
   }
@@ -16,6 +27,9 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
   globalFieldNames = globalFieldNames || [];
   if (!globalFieldNames.includes(PORTLETS_COLLECTION_NAME)) {
     globalFieldNames.push(PORTLETS_COLLECTION_NAME);
+  }
+  if (!globalFieldNames.includes(PORTLETS_MAPPINGS_NAME)) {
+    globalFieldNames.push(PORTLETS_MAPPINGS_NAME);
   }
   const defaultPortletConfig = lodash.omit(sandboxConfig, globalFieldNames);
   //
@@ -37,17 +51,24 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
  * portletArguments ~ { L, T, blockRef }
  * @param {*} params
  */
-function PortletMixiner (params) {
+function PortletMixiner (params = {}) {
   const self = this;
-  const { pluginConfig, portletForwarder, portletArguments, PortletConstructor } = params || {};
+  const { pluginConfig, portletForwarder, portletArguments, PortletConstructor } = params;
+  let { portletConfigs, portletMappings, portletAvailableChecker } = params;
   //
   this._portlets = {};
-  lodash.forOwn(pluginConfig.portlets, function(portletConfig, portletName) {
+  portletConfigs = portletConfigs || pluginConfig.portlets;
+  portletMappings = portletMappings || {};
+  portletAvailableChecker = portletAvailableChecker || function (parentPortletName) {
+    return hasPortletOf(portletForwarder, parentPortletName);
+  }
+  lodash.forOwn(portletConfigs, function(portletConfig, portletName) {
+    const parentPortletName = portletMappings[portletName] || portletName;
     if (portletConfig.enabled !== false) {
       self._portlets[portletName] = {
-        available: hasPortletOf(portletForwarder, portletName),
+        available: portletAvailableChecker(parentPortletName),
         processor: new PortletConstructor(Object.assign({
-          portletConfig, portletName, portletForwarder
+          portletConfig, portletName, parentPortletName, portletForwarder
         }, portletArguments || {}))
       };
     }
@@ -82,7 +103,7 @@ PortletMixiner.prototype.getPortlet = function(portletName) {
   return processor;
 };
 
-PortletMixiner.prototype.eachPortlets = function(iteratee, portletNames, options) {
+PortletMixiner.prototype.eachPortlets = function(iteratee, portletNames) {
   if (!lodash.isFunction(iteratee)) {
     return Promise.reject(newError("InvalidArgumentError", {
       message: "The first argument must be a function",

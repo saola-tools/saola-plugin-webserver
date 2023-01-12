@@ -24,17 +24,18 @@ function WebserverHandler (params = {}) {
   const pluginConfig = portletifyConfig(sandboxConfig);
 
   PortletMixiner.call(this, {
-    pluginConfig,
-    portletForwarder: undefined,
+    portletConfigs: pluginConfig.portlets,
     portletArguments: { L, T, blockRef },
     PortletConstructor: WebserverPortlet,
   });
 
+  // @deprecated
   this.attach = this.register = function(outlet, portletName) {
     const portlet = this.getPortlet(portletName);
     portlet && portlet.attach(outlet);
   };
 
+  // @deprecated
   this.detach = this.unregister = function(outlet, portletName) {
     const portlet = this.getPortlet(portletName);
     portlet && portlet.detach(outlet);

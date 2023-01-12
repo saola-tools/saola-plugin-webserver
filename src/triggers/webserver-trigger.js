@@ -13,18 +13,18 @@ function WebserverTrigger (params = {}) {
 
   // @Deprecated
   this.getPort = function () {
-    return webserverHandler.getPortlet().getPort();
+    return webserverHandler.hasPortlet() && webserverHandler.getPortlet().getPort() || undefined;
   };
 
   // @Deprecated
   this.getHost = function () {
-    return webserverHandler.getPortlet().getHost();
+    return webserverHandler.hasPortlet() && webserverHandler.getPortlet().getHost() || undefined;
   };
 
   // @Deprecated
   Object.defineProperty(this, "ssl", {
     get: function() {
-      return lodash.assign({}, webserverHandler.getPortlet().ssl);
+      return webserverHandler.hasPortlet() && webserverHandler.getPortlet().ssl || {};
     },
     set: function(value) {}
   });
@@ -32,19 +32,19 @@ function WebserverTrigger (params = {}) {
   // @Deprecated
   Object.defineProperty(this, "server", {
     get: function() {
-      return webserverHandler.getPortlet().server;
+      return webserverHandler.hasPortlet() && webserverHandler.getPortlet().server || undefined;
     },
     set: function(value) {}
   });
 
   // @Deprecated
   this.attach = this.register = function(outlet) {
-    webserverHandler.getPortlet().attach(outlet);
+    webserverHandler.hasPortlet() && webserverHandler.getPortlet().attach(outlet);
   };
 
   // @Deprecated
   this.detach = this.unregister = function(outlet) {
-    webserverHandler.getPortlet().detach(outlet);
+    webserverHandler.hasPortlet() && webserverHandler.getPortlet().detach(outlet);
   };
 
   this.start = function() {
