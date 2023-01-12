@@ -8,24 +8,28 @@ const DEFAULT_PORTLET_NAME = "default";
 const PORTLETS_COLLECTION_NAME = "portlets";
 
 function portletifyConfig (sandboxConfig, globalFieldNames) {
-  globalFieldNames = globalFieldNames || [];
-  if (!globalFieldNames.includes(PORTLETS_COLLECTION_NAME)) {
-    globalFieldNames.push(PORTLETS_COLLECTION_NAME);
-  }
   if (!lodash.has(sandboxConfig, PORTLETS_COLLECTION_NAME)) {
     lodash.set(sandboxConfig, PORTLETS_COLLECTION_NAME, {});
   }
   const portlets = lodash.get(sandboxConfig, PORTLETS_COLLECTION_NAME);
   //
-  const globalPortletConfig = lodash.omit(sandboxConfig, globalFieldNames);
+  globalFieldNames = globalFieldNames || [];
+  if (!globalFieldNames.includes(PORTLETS_COLLECTION_NAME)) {
+    globalFieldNames.push(PORTLETS_COLLECTION_NAME);
+  }
+  const defaultPortletConfig = lodash.omit(sandboxConfig, globalFieldNames);
   //
   if (lodash.has(portlets, DEFAULT_PORTLET_NAME)) {
-    lodash.merge(portlets[DEFAULT_PORTLET_NAME], globalPortletConfig);
+    lodash.merge(portlets[DEFAULT_PORTLET_NAME], defaultPortletConfig);
+    return lodash.omit(sandboxConfig, lodash.keys(defaultPortletConfig));
   } else {
-    lodash.set(portlets, DEFAULT_PORTLET_NAME, globalPortletConfig);
+    if (lodash.size(portlets) == 0) {
+      lodash.set(portlets, DEFAULT_PORTLET_NAME, defaultPortletConfig);
+      return lodash.omit(sandboxConfig, lodash.keys(defaultPortletConfig));
+    }
   }
   //
-  return lodash.omit(sandboxConfig, lodash.keys(globalPortletConfig));
+  return sandboxConfig;
 }
 
 /**
@@ -33,10 +37,10 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
  * portletArguments ~ { L, T, blockRef }
  * @param {*} params
  */
- function PortletMixiner (params) {
+function PortletMixiner (params) {
   const self = this;
   const { pluginConfig, portletForwarder, portletArguments, PortletConstructor } = params || {};
-
+  //
   this._portlets = {};
   lodash.forOwn(pluginConfig.portlets, function(portletConfig, portletName) {
     if (portletConfig.enabled !== false) {
@@ -48,6 +52,8 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
       };
     }
   });
+  //
+  this._strictMode = lodash.get(params, "strictMode", false);
 }
 
 PortletMixiner.prototype.getPortletNames = function() {
@@ -61,10 +67,32 @@ PortletMixiner.prototype.hasPortlet = function(portletName) {
 
 PortletMixiner.prototype.getPortlet = function(portletName) {
   portletName = portletName || DEFAULT_PORTLET_NAME;
-  return this._portlets[portletName] && this._portlets[portletName].processor || undefined;
+  const processor = this._portlets[portletName] && this._portlets[portletName].processor;
+  if (!processor) {
+    if (this._strictMode) {
+      throw newError("PortletNotFoundError", {
+        payload: {
+          portletName,
+          availablePortlets: lodash.keys(this._portlets),
+        }
+      });
+    }
+    return undefined;
+  }
+  return processor;
 };
 
 PortletMixiner.prototype.eachPortlets = function(iteratee, portletNames, options) {
+  if (!lodash.isFunction(iteratee)) {
+    return Promise.reject(newError("InvalidArgumentError", {
+      message: "The first argument must be a function",
+      payload: {
+        type: typeof iteratee,
+        value: iteratee,
+      }
+    }));
+  }
+  //
   if (lodash.isNil(portletNames)) {
     portletNames = this.getPortletNames();
   }
@@ -72,19 +100,11 @@ PortletMixiner.prototype.eachPortlets = function(iteratee, portletNames, options
     portletNames = [portletNames];
   }
   if (!lodash.isArray(portletNames)) {
-    return Promise.reject(newError("The second argument must be an array", {
+    return Promise.reject(newError("InvalidArgumentError", {
+      message: "The second argument must be an array",
       payload: {
         type: typeof portletNames,
         value: portletNames,
-      }
-    }));
-  }
-  //
-  if (!lodash.isFunction(iteratee)) {
-    return Promise.reject(newError("The first argument must be a function", {
-      payload: {
-        type: typeof iteratee,
-        value: iteratee,
       }
     }));
   }

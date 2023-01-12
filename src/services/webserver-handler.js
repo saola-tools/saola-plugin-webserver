@@ -55,169 +55,168 @@ function WebserverHandler (params = {}) {
 
 Object.assign(WebserverHandler.prototype, PortletMixiner.prototype);
 
-class WebserverPortlet {
-  constructor (params = {}) {
-    const { blockRef, portletConfig, L, T } = params;
+function WebserverPortlet (params) {
+  const { L, T, blockRef, portletConfig } = params;
 
-    let { port, host } = extractConfigAddress(portletConfig);
+  let { port, host } = extractConfigAddress(portletConfig);
 
-    this.getPort = function () {
-      return port;
-    };
+  this.getPort = function () {
+    return port;
+  };
 
-    this.getHost = function () {
-      return host;
-    };
+  this.getHost = function () {
+    return host;
+  };
 
-    const isLocalhost = SERVER_HOSTS.indexOf(host) >= 0;
-    const ssl = loadSSLConfig({ L, T, blockRef }, portletConfig, isLocalhost);
+  const isLocalhost = SERVER_HOSTS.indexOf(host) >= 0;
+  const ssl = loadSSLConfig({ L, T, blockRef }, portletConfig, isLocalhost);
 
-    const protocol = ssl.available ? "https" : "http";
+  const protocol = ssl.available ? "https" : "http";
 
-    const server = ssl.available ? https.createServer({
-      ca: ssl.ca,
-      cert: ssl.cert,
-      key: ssl.key,
-      requestCert: true,
-      rejectUnauthorized: false
-    }) : http.createServer();
+  const server = ssl.available ? https.createServer({
+    ca: ssl.ca,
+    cert: ssl.cert,
+    key: ssl.key,
+    requestCert: true,
+    rejectUnauthorized: false
+  }) : http.createServer();
 
-    // @Deprecated
-    Object.defineProperty(this, "ssl", {
-      get: function() { return lodash.assign({}, ssl); },
-      set: function(value) {}
-    });
+  // @Deprecated
+  Object.defineProperty(this, "ssl", {
+    get: function() { return lodash.assign({}, ssl); },
+    set: function(value) {}
+  });
 
-    // @Deprecated
-    Object.defineProperty(this, "server", {
-      get: function() { return server; },
-      set: function(value) {}
-    });
+  // @Deprecated
+  Object.defineProperty(this, "server", {
+    get: function() { return server; },
+    set: function(value) {}
+  });
 
-    //
-    this._store = { blockRef, L, T, portletConfig, server, protocol, port, host };
-  }
   //
-  attach (outlet) {
-    const { blockRef, L, T, server } = this._store;
-    //
+  this._store = { L, T, blockRef, portletConfig, server, protocol, port, host };
+}
+
+WebserverPortlet.prototype.attach = function (outlet) {
+  const { L, T, blockRef, server } = this._store;
+  //
+  L && L.has("silly") && L.log("silly", T && T.toMessage({
+    tags: [ blockRef, "attach", "begin" ],
+    text: "attach() - try to register a outlet"
+  }));
+  if (server.listeners("request").indexOf(outlet) >= 0) {
     L && L.has("silly") && L.log("silly", T && T.toMessage({
-      tags: [ blockRef, "attach", "begin" ],
-      text: "attach() - try to register a outlet"
+      tags: [ blockRef, "attach", "skip" ],
+      text: "attach() - outlet has already attached. skip!"
     }));
-    if (server.listeners("request").indexOf(outlet) >= 0) {
-      L && L.has("silly") && L.log("silly", T && T.toMessage({
-        tags: [ blockRef, "attach", "skip" ],
-        text: "attach() - outlet has already attached. skip!"
-      }));
-    } else {
-      server.addListener("request", outlet);
-      L && L.has("silly") && L.log("silly", T && T.toMessage({
-        tags: [ blockRef, "attach", "done" ],
-        text: "attach() - attach the outlet"
-      }));
-    }
-  }
-  //
-  register (outlet) {
-    return this.attach(outlet);
-  }
-  //
-  detach (outlet) {
-    const { blockRef, L, T, server } = this._store;
-    //
+  } else {
+    server.addListener("request", outlet);
     L && L.has("silly") && L.log("silly", T && T.toMessage({
-      tags: [ blockRef, "detach", "begin" ],
-      text: "detach() - try to unregister a outlet"
+      tags: [ blockRef, "attach", "done" ],
+      text: "attach() - attach the outlet"
     }));
-    if (server.listeners("request").indexOf(outlet) >= 0) {
-      server.removeListener("request", outlet);
-      L && L.has("silly") && L.log("silly", T && T.toMessage({
-        tags: [ blockRef, "detach", "done" ],
-        text: "detach() - detach the outlet"
-      }));
-    } else {
-      L && L.has("silly") && L.log("silly", T && T.toMessage({
-        tags: [ blockRef, "detach", "skip" ],
-        text: "detach() - outlet is not available. skip!"
-      }));
-    }
   }
+};
+
+//
+WebserverPortlet.prototype.register = function (outlet) {
+  return this.attach(outlet);
+};
+//
+WebserverPortlet.prototype.detach = function (outlet) {
+  const { L, T, blockRef, server } = this._store;
   //
-  unregister (outlet) {
-    return this.detach(outlet);
+  L && L.has("silly") && L.log("silly", T && T.toMessage({
+    tags: [ blockRef, "detach", "begin" ],
+    text: "detach() - try to unregister a outlet"
+  }));
+  if (server.listeners("request").indexOf(outlet) >= 0) {
+    server.removeListener("request", outlet);
+    L && L.has("silly") && L.log("silly", T && T.toMessage({
+      tags: [ blockRef, "detach", "done" ],
+      text: "detach() - detach the outlet"
+    }));
+  } else {
+    L && L.has("silly") && L.log("silly", T && T.toMessage({
+      tags: [ blockRef, "detach", "skip" ],
+      text: "detach() - outlet is not available. skip!"
+    }));
   }
+};
+//
+WebserverPortlet.prototype.unregister = function (outlet) {
+  return this.detach(outlet);
+};
+//
+WebserverPortlet.prototype.start = function () {
+  const self = this;
+  const { L, T, blockRef, portletConfig, protocol, host, port, server } = this._store;
   //
-  start () {
-    const self = this;
-    const { blockRef, L, T, portletConfig, protocol, host, port, server } = this._store;
+  if (portletConfig.enabled === false) return Promise.resolve();
+  return new Promise(function(resolve, reject) {
+    L && L.has("silly") && L.log("silly", T && T.add({ protocol, host, port }).toMessage({
+      tags: [ blockRef, "webserver", "starting" ],
+      text: "webserver is starting"
+    }));
     //
-    if (portletConfig.enabled === false) return Promise.resolve();
-    return new Promise(function(resolve, reject) {
-      L && L.has("silly") && L.log("silly", T && T.add({ protocol, host, port }).toMessage({
-        tags: [ blockRef, "webserver", "starting" ],
-        text: "webserver is starting"
+    server.once("error", function (err) {
+      L && L.has("silly") && L.log("silly", T && T.add(lodash.pick(err, ["name", "message"])).toMessage({
+        tags: [ blockRef, "webserver", "error" ],
+        text: "webserver start failed with the Error[${name}]: ${message}"
+      }));
+      if (err) {
+        return reject(err);
+      }
+    });
+    // If port is omitted or is 0, the operating system will assign an arbitrary unused port
+    // If host is omitted, the server will accept connections on the unspecified IPv4 address (0.0.0.0)
+    const serverInstance = server.listen.apply(server, buildListenArgs(port, host, function () {
+      const port = serverInstance.address().port;
+      const host = serverInstance.address().address;
+      //
+      chores.isVerboseForced("webserver", portletConfig) &&
+          console.log("webserver is listening on %s://%s:%s", protocol, host, port);
+      L && L.has("silly") && L.log("silly", T && T.toMessage({
+        tags: [ blockRef, "webserver", "started" ],
+        text: "webserver has started"
       }));
       //
-      server.once("error", function (err) {
-        L && L.has("silly") && L.log("silly", T && T.add(lodash.pick(err, ["name", "message"])).toMessage({
-          tags: [ blockRef, "webserver", "error" ],
-          text: "webserver start failed with the Error[${name}]: ${message}"
-        }));
-        if (err) {
-          return reject(err);
-        }
-      });
-      // If port is omitted or is 0, the operating system will assign an arbitrary unused port
-      // If host is omitted, the server will accept connections on the unspecified IPv4 address (0.0.0.0)
-      const serverInstance = server.listen.apply(server, buildListenArgs(port, host, function () {
-        const port = serverInstance.address().port;
-        const host = serverInstance.address().address;
-        //
-        chores.isVerboseForced("webserver", portletConfig) &&
-            console.log("webserver is listening on %s://%s:%s", protocol, host, port);
-        L && L.has("silly") && L.log("silly", T && T.toMessage({
-          tags: [ blockRef, "webserver", "started" ],
-          text: "webserver has started"
-        }));
-        //
-        lodash.assign(self._store, { port, host });
-        //
-        resolve(serverInstance);
-      }));
-    });
-  }
+      lodash.assign(self._store, { port, host });
+      //
+      resolve(serverInstance);
+    }));
+  });
+};
+//
+WebserverPortlet.prototype.stop = function () {
+  const { L, T, blockRef, portletConfig, protocol, host, port, server } = this._store;
   //
-  stop () {
-    const { blockRef, L, T, portletConfig, protocol, host, port, server } = this._store;
-    //
-    if (portletConfig.enabled === false) return Promise.resolve();
-    return new Promise(function(resolve, reject) {
-      L && L.has("silly") && L.log("silly", T && T.add({ protocol, host, port }).toMessage({
-        tags: [ blockRef, "webserver", "stopping" ],
-        text: "webserver is stopping"
-      }));
-      server.close(function (err) {
-        chores.isVerboseForced("webserver", portletConfig) &&
-            console.log("webserver has been closed");
-        // https://nodejs.org/api/net.html#net_server_close_callback
-        if (err) {
-          L && L.has("error") && L.log("error", T && T.toMessage({
-            tags: [ blockRef, "webserver", "stopped" ],
-            text: "the webserver was not open when it was closed"
-          }));
-          reject(err);
-        } else {
-          L && L.has("silly") && L.log("silly", T && T.toMessage({
-            tags: [ blockRef, "webserver", "stopped" ],
-            text: "the webserver has stopped successfully"
-          }));
-          resolve();
-        }
-      });
+  if (portletConfig.enabled === false) return Promise.resolve();
+  return new Promise(function(resolve, reject) {
+    L && L.has("silly") && L.log("silly", T && T.add({ protocol, host, port }).toMessage({
+      tags: [ blockRef, "webserver", "stopping" ],
+      text: "webserver is stopping"
+    }));
+    server.close(function (err) {
+      chores.isVerboseForced("webserver", portletConfig) &&
+          console.log("webserver has been closed");
+      // https://nodejs.org/api/net.html#net_server_close_callback
+      if (err) {
+        L && L.has("error") && L.log("error", T && T.toMessage({
+          tags: [ blockRef, "webserver", "stopped" ],
+          text: "the webserver was not open when it was closed"
+        }));
+        reject(err);
+      } else {
+        L && L.has("silly") && L.log("silly", T && T.toMessage({
+          tags: [ blockRef, "webserver", "stopped" ],
+          text: "the webserver has stopped successfully"
+        }));
+        resolve();
+      }
     });
-  }
-}
+  });
+};
 
 WebserverHandler.referenceHash = {};
 

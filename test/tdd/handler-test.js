@@ -50,6 +50,31 @@ describe("webserverHandler", function() {
       assert.deepEqual(portletifyConfig(sandboxConfig), expected);
     });
 
+    it("skip converting legacy sandboxConfig fields when the portlets is not empty", function() {
+      assert.isFunction(portletifyConfig);
+      //
+      const sandboxConfig = {
+        "contextPath": "/",
+        "portlets": {
+          "monitor": {
+            "host": "0.0.0.0",
+            "port": 7979
+          }
+        }
+      };
+      const expected = {
+        "contextPath": "/",
+        "portlets": {
+          "monitor": {
+            "host": "0.0.0.0",
+            "port": 7979
+          }
+        }
+      };
+      //
+      assert.deepEqual(portletifyConfig(sandboxConfig), expected);
+    });
+
     it("merge legacy sandboxConfig fields to the portlets.default if it is exists", function() {
       assert.isFunction(portletifyConfig);
       //
