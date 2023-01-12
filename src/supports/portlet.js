@@ -12,10 +12,7 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
   if (!lodash.isPlainObject(sandboxConfig)) {
     throw newError("InvalidSandboxConfigError", {
       message: "sandboxConfig must be an object",
-      payload: {
-        sandboxConfigType: typeof sandboxConfig,
-        sandboxConfig,
-      }
+      payload: { sandboxConfig }
     });
   }
   //
@@ -54,15 +51,15 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
 function PortletMixiner (params = {}) {
   const self = this;
   const { pluginConfig, portletForwarder, portletArguments, PortletConstructor } = params;
-  let { portletConfigs, portletMappings, portletAvailableChecker } = params;
+  let { portletDescriptors, portletMappings, portletAvailableChecker } = params;
   //
   this._portlets = {};
-  portletConfigs = portletConfigs || pluginConfig.portlets;
+  portletDescriptors = portletDescriptors || lodash.get(pluginConfig, PORTLETS_COLLECTION_NAME, {});
   portletMappings = portletMappings || {};
   portletAvailableChecker = portletAvailableChecker || function (parentPortletName) {
     return hasPortletOf(portletForwarder, parentPortletName);
   }
-  lodash.forOwn(portletConfigs, function(portletConfig, portletName) {
+  lodash.forOwn(portletDescriptors, function(portletConfig, portletName) {
     const parentPortletName = portletMappings[portletName] || portletName;
     if (portletConfig.enabled !== false) {
       self._portlets[portletName] = {
@@ -160,6 +157,5 @@ module.exports = {
   DEFAULT_PORTLET_NAME,
   PORTLETS_COLLECTION_NAME,
   portletifyConfig,
-  standardizeConfig: portletifyConfig,
   PortletMixiner,
 };
