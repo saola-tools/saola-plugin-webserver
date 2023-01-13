@@ -2,7 +2,6 @@
 
 const Devebot = require("devebot");
 const chores = Devebot.require("chores");
-const lodash = Devebot.require("lodash");
 
 function WebserverTrigger (params = {}) {
   const { packageName, loggingFactory, webserverHandler } = params;

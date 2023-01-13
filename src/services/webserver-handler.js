@@ -10,6 +10,7 @@ const Promise = Devebot.require("bluebird");
 const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");
 
+const { PORTLETS_COLLECTION_NAME } = require("../supports/portlet");
 const { portletifyConfig, PortletMixiner } = require("../supports/portlet");
 
 const SERVER_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"];
@@ -24,7 +25,7 @@ function WebserverHandler (params = {}) {
   const pluginConfig = portletifyConfig(sandboxConfig);
 
   PortletMixiner.call(this, {
-    portletConfigs: pluginConfig.portlets,
+    portletDescriptors: lodash.get(pluginConfig, PORTLETS_COLLECTION_NAME, {}),
     portletArguments: { L, T, blockRef },
     PortletConstructor: WebserverPortlet,
   });

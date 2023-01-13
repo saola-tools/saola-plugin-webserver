@@ -49,19 +49,44 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
  * @param {*} params
  */
 function PortletMixiner (params = {}) {
+  this._portlets = {};
+  //
   const self = this;
   const { pluginConfig, portletForwarder, portletArguments, PortletConstructor } = params;
   let { portletDescriptors, portletMappings, portletAvailableChecker } = params;
   //
-  this._portlets = {};
-  portletDescriptors = portletDescriptors || lodash.get(pluginConfig, PORTLETS_COLLECTION_NAME, {});
+  if (lodash.isNil(portletDescriptors)) {
+    if (lodash.isNil(pluginConfig)) {
+      throw newError("UndefinedPortletDescriptors", {
+        message: "portletDescriptors or pluginConfig must be declared"
+      });
+    } else {
+      if (!(PORTLETS_COLLECTION_NAME in pluginConfig)) {
+        throw newError("InvalidPluginConfigPortlets", {
+          message: "pluginConfig.portlets not found",
+          payload: {
+            fieldName: PORTLETS_COLLECTION_NAME
+          }
+        });
+      }
+      portletDescriptors = lodash.get(pluginConfig, PORTLETS_COLLECTION_NAME);
+    }
+  }
+  if (!lodash.isPlainObject(portletDescriptors)) {
+    throw newError("InvalidPortletDescriptors", {
+      message: "portletDescriptors must be an object"
+    });
+  }
+  //
   portletMappings = portletMappings || {};
+  //
   portletAvailableChecker = portletAvailableChecker || function (parentPortletName) {
     return hasPortletOf(portletForwarder, parentPortletName);
-  }
+  };
+  //
   lodash.forOwn(portletDescriptors, function(portletConfig, portletName) {
-    const parentPortletName = portletMappings[portletName] || portletName;
     if (portletConfig.enabled !== false) {
+      const parentPortletName = portletMappings[portletName] || portletName;
       self._portlets[portletName] = {
         available: portletAvailableChecker(parentPortletName),
         processor: new PortletConstructor(Object.assign({
