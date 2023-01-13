@@ -50,6 +50,7 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
  */
 function PortletMixiner (params = {}) {
   this._portlets = {};
+  this._aliases = {};
   //
   const self = this;
   const { pluginConfig, portletForwarder, portletArguments, PortletConstructor } = params;
@@ -84,9 +85,16 @@ function PortletMixiner (params = {}) {
     return hasPortletOf(portletForwarder, parentPortletName);
   };
   //
-  lodash.forOwn(portletDescriptors, function(portletConfig, portletName) {
-    if (portletConfig.enabled !== false) {
-      const parentPortletName = portletMappings[portletName] || portletName;
+  lodash.forOwn(portletDescriptors, function(portletDescriptor, portletKey) {
+    if (portletDescriptor.enabled !== false) {
+      const parentPortletName = portletMappings[portletKey] || portletKey;
+      //
+      const portletName = lodash.get(portletDescriptor, ["__metadata__", "name"], portletKey);
+      if (portletName != portletKey) {
+        this._aliases[portletKey] = portletName;
+      }
+      const portletConfig = lodash.omit(portletDescriptor, "__metadata__", {});
+      //
       self._portlets[portletName] = {
         available: portletAvailableChecker(parentPortletName),
         processor: new PortletConstructor(Object.assign({
@@ -103,13 +111,17 @@ PortletMixiner.prototype.getPortletNames = function() {
   return lodash.keys(this._portlets);
 };
 
+PortletMixiner.prototype.resolvePortletName = function (portletName) {
+  return this._aliases[portletName] || portletName || DEFAULT_PORTLET_NAME;
+};
+
 PortletMixiner.prototype.hasPortlet = function(portletName) {
-  portletName = portletName || DEFAULT_PORTLET_NAME;
+  portletName = this.resolvePortletName(portletName);
   return this._portlets[portletName] && this._portlets[portletName].available || false;
 };
 
 PortletMixiner.prototype.getPortlet = function(portletName) {
-  portletName = portletName || DEFAULT_PORTLET_NAME;
+  portletName = this.resolvePortletName(portletName);
   const processor = this._portlets[portletName] && this._portlets[portletName].processor;
   if (!processor) {
     if (this._strictMode) {
