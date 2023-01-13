@@ -6,7 +6,6 @@ const lodash = Devebot.require("lodash");
 
 const DEFAULT_PORTLET_NAME = "default";
 const PORTLETS_COLLECTION_NAME = "portlets";
-const PORTLETS_MAPPINGS_NAME = "portletMappings";
 
 function portletifyConfig (sandboxConfig, globalFieldNames) {
   if (!lodash.isPlainObject(sandboxConfig)) {
@@ -24,9 +23,6 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
   globalFieldNames = globalFieldNames || [];
   if (!globalFieldNames.includes(PORTLETS_COLLECTION_NAME)) {
     globalFieldNames.push(PORTLETS_COLLECTION_NAME);
-  }
-  if (!globalFieldNames.includes(PORTLETS_MAPPINGS_NAME)) {
-    globalFieldNames.push(PORTLETS_MAPPINGS_NAME);
   }
   const defaultPortletConfig = lodash.omit(sandboxConfig, globalFieldNames);
   //
@@ -54,7 +50,7 @@ function PortletMixiner (params = {}) {
   this._aliases = {};
   //
   const { pluginConfig, portletForwarder, portletArguments, PortletConstructor } = params;
-  let { portletDescriptors, portletMappings, portletAvailableChecker } = params;
+  let { portletDescriptors, portletReferenceHolders, portletAvailableChecker } = params;
   //
   if (lodash.isNil(portletDescriptors)) {
     if (lodash.isNil(pluginConfig)) {
@@ -62,6 +58,7 @@ function PortletMixiner (params = {}) {
         message: "portletDescriptors or pluginConfig must be declared"
       });
     } else {
+      // @deprecated
       if (!(PORTLETS_COLLECTION_NAME in pluginConfig)) {
         throw newError("InvalidPluginConfigPortlets", {
           message: "pluginConfig.portlets not found",
@@ -79,27 +76,37 @@ function PortletMixiner (params = {}) {
     });
   }
   //
-  portletMappings = portletMappings || {};
+  if (portletReferenceHolders && !lodash.isPlainObject(portletReferenceHolders)) {
+    throw newError("InvalidPortletReferenceHolders", {
+      message: "portletReferenceHolders must be a plain object"
+    });
+  }
   //
-  portletAvailableChecker = portletAvailableChecker || function (parentPortletName) {
-    return hasPortletOf(portletForwarder, parentPortletName);
+  portletAvailableChecker = portletAvailableChecker || function (portletName) {
+    return hasPortletOf(portletForwarder, portletName);
   };
   //
   lodash.forOwn(portletDescriptors, function(portletDescriptor, portletKey) {
     if (portletDescriptor.enabled !== false) {
-      const parentPortletName = portletMappings[portletKey] || portletKey;
-      //
       const portletName = lodash.get(portletDescriptor, ["__metadata__", "name"], portletKey);
       if (portletName != portletKey) {
         self._aliases[portletKey] = portletName;
       }
       const portletConfig = lodash.omit(portletDescriptor, "__metadata__", {});
       //
+      const portletDependencies = {};
+      for (const portletReferenceName in portletReferenceHolders) {
+        const referenceHolder = portletReferenceHolders[portletReferenceName];
+        if (referenceHolder && referenceHolder.hasPortlet && referenceHolder.hasPortlet(portletName)) {
+          portletDependencies[portletReferenceName] = referenceHolder.getPortlet(portletName);
+        }
+      }
+      //
       self._portlets[portletName] = {
-        available: portletAvailableChecker(parentPortletName),
+        available: portletAvailableChecker(portletName) && lodash.size(portletDependencies) == lodash.size(portletReferenceHolders),
         processor: new PortletConstructor(Object.assign({
-          portletConfig, portletName, parentPortletName, portletForwarder
-        }, portletArguments || {}))
+          portletConfig, portletName,
+        }, portletDependencies, portletArguments || {}))
       };
     }
   });
