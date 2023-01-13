@@ -49,10 +49,10 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
  * @param {*} params
  */
 function PortletMixiner (params = {}) {
+  const self = this;
   this._portlets = {};
   this._aliases = {};
   //
-  const self = this;
   const { pluginConfig, portletForwarder, portletArguments, PortletConstructor } = params;
   let { portletDescriptors, portletMappings, portletAvailableChecker } = params;
   //
@@ -91,7 +91,7 @@ function PortletMixiner (params = {}) {
       //
       const portletName = lodash.get(portletDescriptor, ["__metadata__", "name"], portletKey);
       if (portletName != portletKey) {
-        this._aliases[portletKey] = portletName;
+        self._aliases[portletKey] = portletName;
       }
       const portletConfig = lodash.omit(portletDescriptor, "__metadata__", {});
       //
