@@ -9,6 +9,7 @@ const builtinPackages = {
 
 plugin.require = function(packageName) {
   if (packageName in builtinPackages) {
+    // eslint-disable-next-line security/detect-non-literal-require,security/detect-object-injection
     return require(builtinPackages[packageName]);
   }
   return null;

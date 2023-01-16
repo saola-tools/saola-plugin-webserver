@@ -7,6 +7,37 @@ const lodash = Devebot.require("lodash");
 const DEFAULT_PORTLET_NAME = "default";
 const PORTLETS_COLLECTION_NAME = "portlets";
 
+function createPortletifier () {
+  function Service (params = {}) {
+    const { sandboxConfig } = params;
+    //
+    let pluginConfig;
+    //
+    this.getPluginConfig = function() {
+      pluginConfig = pluginConfig || portletifyConfig(sandboxConfig);
+      return pluginConfig;
+    };
+    //
+    this.getPortletDescriptors = function(selectedPortlets) {
+      return _filterPortletDescriptors(this.getPluginConfig(), selectedPortlets);
+    };
+  }
+  //
+  return Service;
+}
+
+function getPortletDescriptors (sandboxConfig, selectedPortlets) {
+  return _filterPortletDescriptors(portletifyConfig(sandboxConfig), selectedPortlets);
+}
+
+function _filterPortletDescriptors (pluginConfig, selectedPortlets) {
+  const portletDescriptors = lodash.get(pluginConfig, PORTLETS_COLLECTION_NAME);
+  if (lodash.isArray(selectedPortlets)) {
+    return lodash.pick(portletDescriptors, selectedPortlets);
+  }
+  return portletDescriptors;
+}
+
 function portletifyConfig (sandboxConfig, globalFieldNames) {
   if (!lodash.isPlainObject(sandboxConfig)) {
     throw newError("InvalidSandboxConfigError", {
@@ -200,6 +231,8 @@ function newError (name, options) {
 module.exports = {
   DEFAULT_PORTLET_NAME,
   PORTLETS_COLLECTION_NAME,
+  createPortletifier,
+  getPortletDescriptors,
   portletifyConfig,
   PortletMixiner,
 };

@@ -177,7 +177,7 @@ WebserverPortlet.prototype.start = function () {
       const host = serverInstance.address().address;
       //
       chores.isVerboseForced("webserver", portletConfig) &&
-          console.log("webserver is listening on %s://%s:%s", protocol, host, port);
+          consoleLog("webserver is listening on %s://%s:%s", protocol, host, port);
       L && L.has("silly") && L.log("silly", T && T.toMessage({
         tags: [ blockRef, "webserver", "started" ],
         text: "webserver has started"
@@ -201,7 +201,7 @@ WebserverPortlet.prototype.stop = function () {
     }));
     server.close(function (err) {
       chores.isVerboseForced("webserver", portletConfig) &&
-          console.log("webserver has been closed");
+          consoleLog("webserver has been closed");
       // https://nodejs.org/api/net.html#net_server_close_callback
       if (err) {
         L && L.has("error") && L.log("error", T && T.toMessage({
@@ -317,6 +317,7 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
   return ssl;
 }
 
-function readFileSync (filepath) {
-  return fs.readFileSync(filepath);
-}
+// eslint-disable-next-line no-console
+const consoleLog = console.log.bind(console);
+
+const readFileSync = fs.readFileSync.bind(fs);

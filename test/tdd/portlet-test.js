@@ -7,7 +7,8 @@ const chores = devebot.require("chores");
 const { assert, mockit, sinon } = require("liberica");
 
 const portlet = require("../../src/supports/portlet");
-const { PORTLETS_COLLECTION_NAME, portletifyConfig, PortletMixiner } = portlet;
+const { PORTLETS_COLLECTION_NAME, PortletMixiner } = portlet;
+const { portletifyConfig, getPortletDescriptors, createPortletifier } = portlet;
 
 describe("supports/portlet", function() {
   const loggingFactory = mockit.createLoggingFactoryMock({ captureMethodCall: false });
@@ -114,6 +115,81 @@ describe("supports/portlet", function() {
       };
       //
       assert.deepEqual(portletifyConfig(sandboxConfig), expected);
+    });
+  });
+
+  describe("getPortletDescriptors", function() {
+    it("converting legacy sandboxConfig fields when the portlets is not empty", function() {
+      assert.isFunction(getPortletDescriptors);
+      //
+      const sandboxConfig = {
+        "contextPath": "/",
+        "portlets": {
+          "manager": {
+            "host": "0.0.0.0",
+            "port": 9696
+          },
+          "monitor": {
+            "host": "0.0.0.0",
+            "port": 9797
+          }
+        }
+      };
+      const expected1 = {
+        "default": {
+          "contextPath": "/",
+        },
+        "manager": {
+          "host": "0.0.0.0",
+          "port": 9696
+        },
+        "monitor": {
+          "host": "0.0.0.0",
+          "port": 9797
+        }
+      };
+      const expected2 = lodash.pick(expected1, ["default", "monitor"]);
+      //
+      assert.deepEqual(getPortletDescriptors(sandboxConfig), expected1);
+      assert.deepEqual(getPortletDescriptors(sandboxConfig, ["default", "monitor"]), expected2);
+    });
+  });
+
+  describe("createPortletifier", function() {
+    it("converting legacy sandboxConfig fields when the portlets is not empty", function() {
+      const sandboxConfig = {
+        "contextPath": "/",
+        "portlets": {
+          "manager": {
+            "host": "0.0.0.0",
+            "port": 9696
+          },
+          "monitor": {
+            "host": "0.0.0.0",
+            "port": 9797
+          }
+        }
+      };
+      const expected1 = {
+        "default": {
+          "contextPath": "/",
+        },
+        "manager": {
+          "host": "0.0.0.0",
+          "port": 9696
+        },
+        "monitor": {
+          "host": "0.0.0.0",
+          "port": 9797
+        }
+      };
+      const expected2 = lodash.pick(expected1, ["default", "monitor"]);
+      //
+      const Portletifier = createPortletifier();
+      const portletifier = new Portletifier({ sandboxConfig });
+      //
+      assert.deepEqual(portletifier.getPortletDescriptors(), expected1);
+      assert.deepEqual(portletifier.getPortletDescriptors(["default", "monitor"]), expected2);
     });
   });
 
