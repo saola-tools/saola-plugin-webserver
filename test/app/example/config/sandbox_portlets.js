@@ -1,12 +1,13 @@
 module.exports = {
-    plugins: {
-      appWebserver: {
-        portlets: {
-          monitor: {
-            host: "localhost",
-            port: 17979
-          }
+  plugins: {
+    appWebserver: {
+      portlets: {
+        default: {},
+        monitor: {
+          host: "localhost",
+          port: 9797
         }
       }
     }
-  };
+  }
+};

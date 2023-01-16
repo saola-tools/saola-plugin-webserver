@@ -29,7 +29,7 @@ curl http://0.0.0.0:7979/example/1234567890
 ```
 
 ```curl
-curl http://localhost:17979/monitor/1234567890
+curl http://localhost:9797/monitor/1234567890
 ```
 
 ## Notes
