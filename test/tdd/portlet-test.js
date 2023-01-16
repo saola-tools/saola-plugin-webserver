@@ -36,7 +36,7 @@ describe("supports/portlet", function() {
       assert.deepEqual(portletifyConfig(sandboxConfig), expected);
     });
 
-    it("skip converting legacy sandboxConfig fields when the portlets is not empty", function() {
+    it("converting legacy sandboxConfig fields when the portlets is not empty", function() {
       assert.isFunction(portletifyConfig);
       //
       const sandboxConfig = {
@@ -49,7 +49,32 @@ describe("supports/portlet", function() {
         }
       };
       const expected = {
-        "contextPath": "/",
+        "portlets": {
+          "default": {
+            "contextPath": "/",
+          },
+          "monitor": {
+            "host": "0.0.0.0",
+            "port": 7979
+          }
+        }
+      };
+      //
+      assert.deepEqual(portletifyConfig(sandboxConfig), expected);
+    });
+
+    it("skips converting legacy empty sandboxConfig when the portlets is not empty", function() {
+      assert.isFunction(portletifyConfig);
+      //
+      const sandboxConfig = {
+        "portlets": {
+          "monitor": {
+            "host": "0.0.0.0",
+            "port": 7979
+          }
+        }
+      };
+      const expected = {
         "portlets": {
           "monitor": {
             "host": "0.0.0.0",
@@ -123,7 +148,7 @@ describe("supports/portlet", function() {
       const example = new ExampleHandler({
         sandboxConfig: {
           host: "0.0.0.0",
-          port: 17779,
+          port: 9797,
         }
       });
       //
@@ -131,7 +156,7 @@ describe("supports/portlet", function() {
       assert.instanceOf(example.getPortlet(), ExamplePortlet);
     });
 
-    it("Handler manages the Portlet with name 'monitor' properly", function() {
+    it("Handler creates the default Portlet and renames to 'monitor'", function() {
       const { Handler: ExampleHandler, Portlet: ExamplePortlet } = generateExample({
         portletArguments: ctx
       });
@@ -139,7 +164,7 @@ describe("supports/portlet", function() {
       const example = new ExampleHandler({
         sandboxConfig: {
           host: "0.0.0.0",
-          port: 17779,
+          port: 9797,
           __metadata__: {
             name: "monitor"
           }
@@ -147,6 +172,31 @@ describe("supports/portlet", function() {
       });
       assert.isFalse(example.hasPortlet());
       assert.isTrue(example.hasPortlet("monitor"));
-    })
+    });
+
+    it("Handler creates the default Portlet and supports multiple portlets", function() {
+      const { Handler: ExampleHandler, Portlet: ExamplePortlet } = generateExample({
+        portletArguments: ctx
+      });
+      //
+      const example = new ExampleHandler({
+        sandboxConfig: {
+          host: "0.0.0.0",
+          port: 9797,
+          portlets: {
+            tracker: {
+              host: "localhost",
+              port: 9797,
+              __metadata__: {
+                name: "monitor"
+              }
+            }
+          }
+        }
+      });
+      assert.isTrue(example.hasPortlet());
+      assert.isTrue(example.hasPortlet("default"));
+      assert.isTrue(example.hasPortlet("monitor"));
+    });
   });
 });

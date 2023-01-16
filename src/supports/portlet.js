@@ -30,7 +30,7 @@ function portletifyConfig (sandboxConfig, globalFieldNames) {
     lodash.merge(portlets[DEFAULT_PORTLET_NAME], defaultPortletConfig);
     return lodash.omit(sandboxConfig, lodash.keys(defaultPortletConfig));
   } else {
-    if (lodash.size(portlets) == 0) {
+    if (lodash.size(defaultPortletConfig) > 0 || lodash.size(portlets) == 0) {
       lodash.set(portlets, DEFAULT_PORTLET_NAME, defaultPortletConfig);
       return lodash.omit(sandboxConfig, lodash.keys(defaultPortletConfig));
     }

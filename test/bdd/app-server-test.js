@@ -2,24 +2,21 @@
 
 const Devebot = require("devebot");
 const chores = Devebot.require("chores");
-const envcloak = require("envcloak").instance;
 
 const app = require("../app/simplest");
 
 describe("app-webserver", function() {
   describe("start/stop app.server", function() {
     before(function() {
-      envcloak.setup({
+      chores.setEnvironments({
         DEVEBOT_FORCING_SILENT: "devebot,webserver",
         LOGOLITE_FULL_LOG_MODE: "false",
         LOGOLITE_ALWAYS_ENABLED: "all",
         LOGOLITE_ALWAYS_MUTED: "all"
       });
-      chores.clearCache();
     });
     //
     after(function() {
-      envcloak.reset();
       chores.clearCache();
     });
     //
