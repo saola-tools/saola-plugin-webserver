@@ -7,7 +7,7 @@ const chores = devebot.require("chores");
 const { assert, mockit, sinon } = require("liberica");
 
 const portlet = require("../../src/supports/portlet");
-const { PORTLETS_COLLECTION_NAME, PortletMixiner } = portlet;
+const { PortletMixiner } = portlet;
 const { portletifyConfig, getPortletDescriptors, createPortletifier } = portlet;
 
 describe("supports/portlet", function() {
@@ -197,23 +197,23 @@ describe("supports/portlet", function() {
     beforeEach(function() {
     });
 
-    function generateExample ({ portletArguments }) {
-      const Portlet = sinon.stub();
+    function generateExample ({ portletArguments, PortletConstructor }) {
+      PortletConstructor = PortletConstructor || sinon.stub();
 
       const Handler = function (params) {
-        const { sandboxConfig } = params;
-        const pluginConfig = portletifyConfig(sandboxConfig);
+        const { sandboxBaseConfig, sandboxConfig } = params;
         //
         PortletMixiner.call(this, {
-          portletDescriptors: lodash.get(pluginConfig, PORTLETS_COLLECTION_NAME, {}),
+          portletBaseConfig: sandboxBaseConfig,
+          portletDescriptors: getPortletDescriptors(sandboxConfig),
           portletArguments: portletArguments,
-          PortletConstructor: Portlet,
+          PortletConstructor: PortletConstructor,
         });
       }
 
       Object.assign(Handler.prototype, PortletMixiner.prototype);
 
-      return { Handler, Portlet };
+      return { Handler, Portlet: PortletConstructor };
     }
 
     it("Handler manages the default Portlet properly", function() {
@@ -230,6 +230,41 @@ describe("supports/portlet", function() {
       //
       assert.isTrue(example.hasPortlet());
       assert.instanceOf(example.getPortlet(), ExamplePortlet);
+    });
+
+    it("Handler supports the portletBaseConfig argument", function() {
+      const ExamplePortlet = sinon.stub();
+      const { Handler: ExampleHandler, Portlet } = generateExample({
+        portletArguments: ctx,
+        PortletConstructor: ExamplePortlet,
+      });
+      //
+      const example = new ExampleHandler({
+        sandboxBaseConfig: {
+          protocol: "http",
+          host: "localhost"
+        },
+        sandboxConfig: {
+          host: "0.0.0.0",
+          port: 9797,
+        }
+      });
+      //
+      assert.isTrue(example.hasPortlet());
+      assert.instanceOf(example.getPortlet(), ExamplePortlet);
+      //
+      assert.equal(ExamplePortlet.callCount, 1);
+      const firstCall = ExamplePortlet.args[0];
+      assert.lengthOf(firstCall, 1);
+      const firstArgOfFirstCall = firstCall[0];
+      assert.deepInclude(firstArgOfFirstCall, {
+        portletName: "default",
+        portletConfig: {
+          protocol: "http",
+          host: "0.0.0.0",
+          port: 9797,
+        }
+      });
     });
 
     it("Handler creates the default Portlet and renames to 'monitor'", function() {
@@ -256,9 +291,13 @@ describe("supports/portlet", function() {
       });
       //
       const example = new ExampleHandler({
+        sandboxBaseConfig: {
+          protocol: "http",
+          host: "127.0.0.1",
+        },
         sandboxConfig: {
           host: "0.0.0.0",
-          port: 9797,
+          port: 7979,
           portlets: {
             tracker: {
               host: "localhost",
@@ -273,6 +312,32 @@ describe("supports/portlet", function() {
       assert.isTrue(example.hasPortlet());
       assert.isTrue(example.hasPortlet("default"));
       assert.isTrue(example.hasPortlet("monitor"));
+      //
+      assert.equal(ExamplePortlet.callCount, 2);
+      //
+      const firstCall = ExamplePortlet.args[0];
+      assert.lengthOf(firstCall, 1);
+      const firstArgOfFirstCall = firstCall[0];
+      assert.deepInclude(firstArgOfFirstCall, {
+        portletName: "monitor",
+        portletConfig: {
+          protocol: "http",
+          host: "localhost",
+          port: 9797,
+        }
+      });
+      //
+      const secondCall = ExamplePortlet.args[1];
+      assert.lengthOf(secondCall, 1);
+      const firstArgOfSecondCall = secondCall[0];
+      assert.deepInclude(firstArgOfSecondCall, {
+        portletName: "default",
+        portletConfig: {
+          protocol: "http",
+          host: "0.0.0.0",
+          port: 7979,
+        }
+      });
     });
   });
 });

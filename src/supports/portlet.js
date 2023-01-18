@@ -80,8 +80,13 @@ function PortletMixiner (params = {}) {
   this._portlets = {};
   this._aliases = {};
   //
-  const { pluginConfig, portletForwarder, portletCommonConfig, portletArguments, PortletConstructor } = params;
-  let { portletDescriptors, portletReferenceHolders, portletAvailableChecker } = params;
+  let { portletBaseConfig, portletDescriptors } = params;
+  const { portletReferenceHolders, portletArguments, PortletConstructor } = params;
+  //
+  const { pluginConfig, portletCommonConfig, portletForwarder } = params;
+  let { portletAvailableChecker } = params;
+  //
+  portletBaseConfig = portletBaseConfig || portletCommonConfig || {};
   //
   if (lodash.isNil(portletDescriptors)) {
     if (lodash.isNil(pluginConfig)) {
@@ -123,7 +128,7 @@ function PortletMixiner (params = {}) {
       if (portletName != portletKey) {
         self._aliases[portletKey] = portletName;
       }
-      const portletConfig = lodash.merge({}, portletCommonConfig, lodash.omit(portletDescriptor, "__metadata__", {}));
+      const portletConfig = lodash.merge({}, portletBaseConfig, lodash.omit(portletDescriptor, "__metadata__", {}));
       //
       const portletDependencies = {};
       for (const portletReferenceName in portletReferenceHolders) {
@@ -132,9 +137,10 @@ function PortletMixiner (params = {}) {
           portletDependencies[portletReferenceName] = referenceHolder.getPortlet(portletName);
         }
       }
+      const isPortletAvailable = lodash.size(portletDependencies) == lodash.size(portletReferenceHolders);
       //
       self._portlets[portletName] = {
-        available: portletAvailableChecker(portletName) && lodash.size(portletDependencies) == lodash.size(portletReferenceHolders),
+        available: portletAvailableChecker(portletName) && isPortletAvailable,
         processor: new PortletConstructor(Object.assign({
           portletConfig, portletName,
         }, portletDependencies, portletArguments || {}))
