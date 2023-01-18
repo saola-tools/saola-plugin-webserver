@@ -80,7 +80,7 @@ function PortletMixiner (params = {}) {
   this._portlets = {};
   this._aliases = {};
   //
-  const { pluginConfig, portletForwarder, portletArguments, PortletConstructor } = params;
+  const { pluginConfig, portletForwarder, portletCommonConfig, portletArguments, PortletConstructor } = params;
   let { portletDescriptors, portletReferenceHolders, portletAvailableChecker } = params;
   //
   if (lodash.isNil(portletDescriptors)) {
@@ -123,7 +123,7 @@ function PortletMixiner (params = {}) {
       if (portletName != portletKey) {
         self._aliases[portletKey] = portletName;
       }
-      const portletConfig = lodash.omit(portletDescriptor, "__metadata__", {});
+      const portletConfig = lodash.merge({}, portletCommonConfig, lodash.omit(portletDescriptor, "__metadata__", {}));
       //
       const portletDependencies = {};
       for (const portletReferenceName in portletReferenceHolders) {

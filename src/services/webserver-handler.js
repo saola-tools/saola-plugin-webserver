@@ -10,23 +10,17 @@ const Promise = Devebot.require("bluebird");
 const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");
 
-const { PORTLETS_COLLECTION_NAME } = require("../supports/portlet");
-const { portletifyConfig, PortletMixiner } = require("../supports/portlet");
+const portlet = require("../supports/portlet");
+const { getPortletDescriptors, PortletMixiner } = portlet;
 
 const SERVER_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"];
 
 function WebserverHandler (params = {}) {
   const { packageName, loggingFactory, sandboxConfig } = params;
-  const blockRef = chores.getBlockRef(__filename, packageName);
-
-  const L = loggingFactory.getLogger();
-  const T = loggingFactory.getTracer();
-
-  const pluginConfig = portletifyConfig(sandboxConfig);
 
   PortletMixiner.call(this, {
-    portletDescriptors: lodash.get(pluginConfig, PORTLETS_COLLECTION_NAME, {}),
-    portletArguments: { L, T, blockRef },
+    portletDescriptors: getPortletDescriptors(sandboxConfig),
+    portletArguments: { packageName, loggingFactory },
     PortletConstructor: WebserverPortlet,
   });
 
@@ -58,7 +52,11 @@ function WebserverHandler (params = {}) {
 Object.assign(WebserverHandler.prototype, PortletMixiner.prototype);
 
 function WebserverPortlet (params) {
-  const { L, T, blockRef, portletConfig } = params;
+  const { packageName, loggingFactory, portletConfig } = params;
+
+  const L = loggingFactory.getLogger();
+  const T = loggingFactory.getTracer();
+  const blockRef = chores.getBlockRef(__filename, packageName);
 
   let { port, host } = extractConfigAddress(portletConfig);
 
