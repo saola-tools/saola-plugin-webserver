@@ -9,7 +9,7 @@ const PORTLETS_COLLECTION_NAME = "portlets";
 
 function createPortletifier () {
   function Service (params = {}) {
-    const { sandboxConfig } = params;
+    const { sandboxBaseConfig, sandboxConfig } = params;
     //
     let pluginConfig;
     //
@@ -20,6 +20,10 @@ function createPortletifier () {
     //
     this.getPortletDescriptors = function(selectedPortlets) {
       return _filterPortletDescriptors(this.getPluginConfig(), selectedPortlets);
+    };
+    //
+    this.getPortletBaseConfig = function() {
+      return sandboxBaseConfig;
     };
   }
   //
