@@ -1,6 +1,6 @@
 "use strict";
 
-const Devebot = require("devebot");
+const Devebot = require("@saola/core");
 const Promise = Devebot.require("bluebird");
 const lodash = Devebot.require("lodash");
 
@@ -24,7 +24,7 @@ function createPortletifier () {
     //
     this.getPortletBaseConfig = function() {
       return sandboxBaseConfig;
-    };
+    }
   }
   //
   return Service;

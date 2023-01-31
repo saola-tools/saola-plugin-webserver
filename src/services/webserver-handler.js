@@ -5,7 +5,7 @@ const http = require("http");
 const https = require("https");
 const path = require("path");
 
-const Devebot = require("devebot");
+const Devebot = require("@saola/core");
 const Promise = Devebot.require("bluebird");
 const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");

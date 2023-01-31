@@ -1,6 +1,6 @@
 module.exports = {
   plugins: {
-    appWebserver: {
+    pluginWebserver: {
       portlets: {
         default: {},
         monitor: {

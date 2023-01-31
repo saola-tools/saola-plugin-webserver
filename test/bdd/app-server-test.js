@@ -1,15 +1,15 @@
 "use strict";
 
-const Devebot = require("devebot");
+const Devebot = require("@saola/core");
 const chores = Devebot.require("chores");
 
 const app = require("../app/simplest");
 
-describe("app-webserver", function() {
+describe("@saola/plugin-webserver", function() {
   describe("start/stop app.server", function() {
     before(function() {
       chores.setEnvironments({
-        DEVEBOT_FORCING_SILENT: "devebot,webserver",
+        SAOLA_FORCING_SILENT: "saola,webserver",
         LOGOLITE_FULL_LOG_MODE: "false",
         LOGOLITE_ALWAYS_ENABLED: "all",
         LOGOLITE_ALWAYS_MUTED: "all"

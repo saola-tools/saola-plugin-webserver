@@ -10,7 +10,7 @@ describe("webserverHandler", function() {
   const ctx = {
     L: loggingFactory.getLogger(),
     T: loggingFactory.getTracer(),
-    blockRef: "app-webserver/webserverHandler",
+    blockRef: "@saola/plugin-webserver/webserverHandler",
   };
 
   describe("buildListenArgs()", function() {

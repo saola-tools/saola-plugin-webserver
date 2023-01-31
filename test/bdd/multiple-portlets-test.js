@@ -3,7 +3,7 @@
 const axios = require("axios");
 const { assert } = require("liberica");
 
-const Devebot = require("devebot");
+const Devebot = require("@saola/core");
 const Promise = Devebot.require("bluebird");
 const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");
@@ -17,14 +17,14 @@ function requireFresh (moduleName, basePath) {
   return require(modulePath);
 }
 
-describe("app-webserver", function() {
+describe("@saola/plugin-webserver", function() {
   describe("multiple-portlets", function() {
     const example = requireFresh("../app/example", __dirname);
     //
     before(function() {
       chores.setEnvironments({
-        DEVEBOT_SANDBOX: "portlets",
-        DEVEBOT_FORCING_SILENT: "devebot,webserver",
+        SAOLA_SANDBOX: "portlets",
+        SAOLA_FORCING_SILENT: "saola,webserver",
         LOGOLITE_FULL_LOG_MODE: "false",
         LOGOLITE_ALWAYS_ENABLED: "all",
         LOGOLITE_ALWAYS_MUTED: "all"
@@ -98,8 +98,8 @@ describe("app-webserver", function() {
     //
     before(function() {
       chores.setEnvironments({
-        DEVEBOT_SANDBOX: "inactive-portlets",
-        DEVEBOT_FORCING_SILENT: "devebot,webserver",
+        SAOLA_SANDBOX: "inactive-portlets",
+        SAOLA_FORCING_SILENT: "saola,webserver",
         LOGOLITE_FULL_LOG_MODE: "false",
         LOGOLITE_ALWAYS_ENABLED: "all",
         LOGOLITE_ALWAYS_MUTED: "all"

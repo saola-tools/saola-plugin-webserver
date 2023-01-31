@@ -1,9 +1,9 @@
 "use strict";
 
-const devebot = require("devebot");
-const Promise = devebot.require("bluebird");
-const lodash = devebot.require("lodash");
-const chores = devebot.require("chores");
+const Devebot = require("@saola/core");
+const Promise = Devebot.require("bluebird");
+const lodash = Devebot.require("lodash");
+const chores = Devebot.require("chores");
 const { assert, mockit, sinon } = require("liberica");
 
 const portlet = require("../../src/supports/portlet");

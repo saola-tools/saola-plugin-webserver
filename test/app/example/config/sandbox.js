@@ -3,7 +3,7 @@ module.exports = {
     enabled: true
   },
   plugins: {
-    appWebserver: {
+    pluginWebserver: {
     }
   }
 };

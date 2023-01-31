@@ -1,7 +1,7 @@
 "use strict";
 
 const path = require("path");
-const plugin = require("devebot").registerLayerware(__dirname);
+const plugin = require("@saola/core").registerLayerware(__dirname);
 
 const builtinPackages = {
   "portlet": path.join(__dirname, ".", "lib/supports/portlet"),

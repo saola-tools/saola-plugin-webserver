@@ -2,11 +2,11 @@
 
 var path = require("path");
 
-var app = require("devebot").launchApplication({
+var app = require("@saola/core").launchApplication({
   appRootPath: __dirname
 }, [
   {
-    name: "app-webserver",
+    name: "@saola/plugin-webserver",
     path: path.join(__dirname, "../../..", "index.js")
   }
 ]);

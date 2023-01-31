@@ -1,4 +1,4 @@
-# app-webserver test/app
+# @saola/plugin-webserver test/app
 
 ## Usage
 
@@ -7,19 +7,19 @@
 Auto detect the port:
 
 ```
-export DEVEBOT_SANDBOX=autoport
+export SAOLA_SANDBOX=autoport
 ```
 
 Start multiple portlets:
 
 ```
-export DEVEBOT_SANDBOX=portlets
+export SAOLA_SANDBOX=portlets
 ```
 
 Start the server:
 
 ```shell
-export DEBUG=devebot*,app*
+export DEBUG=saola*,app*
 export LOGOLITE_DEBUGLOG_ENABLED=true
 node test/app/example
 ```
