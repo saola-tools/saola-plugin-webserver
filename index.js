@@ -1,18 +1,17 @@
 "use strict";
 
-const path = require("path");
-const plugin = require("@saola/core").registerLayerware(__dirname);
+const Devebot = require("@saola/core");
+const lodash = Devebot.require("lodash");
+
+const plugin = Devebot.registerLayerware(__dirname);
 
 const builtinPackages = {
-  "portlet": path.join(__dirname, ".", "lib/supports/portlet"),
+  // eslint-disable-next-line security/detect-non-literal-require,security/detect-object-injection
+  "portlet": Devebot.require("portlet"),
 };
 
 plugin.require = function(packageName) {
-  if (packageName in builtinPackages) {
-    // eslint-disable-next-line security/detect-non-literal-require,security/detect-object-injection
-    return require(builtinPackages[packageName]);
-  }
-  return null;
+  return lodash.get(builtinPackages, packageName);
 };
 
 module.exports = plugin;

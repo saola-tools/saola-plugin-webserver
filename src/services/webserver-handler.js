@@ -10,7 +10,7 @@ const Promise = Devebot.require("bluebird");
 const chores = Devebot.require("chores");
 const lodash = Devebot.require("lodash");
 
-const portlet = require("../supports/portlet");
+const portlet = Devebot.require("portlet");
 const { getPortletDescriptors, PortletMixiner } = portlet;
 
 const SERVER_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"];

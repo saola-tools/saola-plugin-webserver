@@ -1,8 +1,8 @@
 "use strict";
 
-var path = require("path");
+const path = require("path");
 
-var app = require("@saola/core").launchApplication({
+const app = require("@saola/core").launchApplication({
   appRootPath: __dirname
 }, [
   {
