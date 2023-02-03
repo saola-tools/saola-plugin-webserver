@@ -9,7 +9,7 @@ describe("@saola/plugin-webserver", function() {
   describe("start/stop app.server", function() {
     before(function() {
       chores.setEnvironments({
-        SAOLA_FORCING_SILENT: "saola,webserver",
+        SAOLA_FORCING_SILENT: "framework,webserver",
         LOGOLITE_FULL_LOG_MODE: "false",
         LOGOLITE_ALWAYS_ENABLED: "all",
         LOGOLITE_ALWAYS_MUTED: "all"

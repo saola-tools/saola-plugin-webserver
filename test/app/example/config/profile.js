@@ -1,4 +1,9 @@
 module.exports = {
+  framework: {
+    hashtags: {
+      label: "saola-plugin-webserver-example"
+    }
+  },
   logger: {
     transports: {
       console: {

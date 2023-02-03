@@ -13,7 +13,7 @@ describe("@saola/plugin-webserver", function() {
   describe("server-life-cycle", function() {
     before(function() {
       chores.setEnvironments({
-        SAOLA_FORCING_SILENT: "saola,webserver",
+        SAOLA_FORCING_SILENT: "framework,webserver",
         LOGOLITE_FULL_LOG_MODE: "false",
         LOGOLITE_ALWAYS_ENABLED: "all",
         LOGOLITE_ALWAYS_MUTED: "all"
@@ -26,6 +26,14 @@ describe("@saola/plugin-webserver", function() {
     //
     it("Request and response smoothly", function() {
       const expected = {
+        "profileConfig": {
+          "framework": {
+            "hashtags": {
+              "label": "saola-plugin-webserver-example"
+            },
+            "mode": "silent"
+          }
+        },
         "port": 7979,
         "host": "0.0.0.0",
         "message": "example [B7ED788C-E130-460C-9D3E-2CCF8B0EEADA] request successfully"

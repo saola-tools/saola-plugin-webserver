@@ -1,18 +1,20 @@
 "use strict";
 
+const Devebot = require("@saola/core");
+const lodash = Devebot.require("lodash");
 const express = require("express");
 
-function Service (params) {
-  params = params || {};
+function Service (params = {}) {
+  const { loggingFactory, sandboxConfig, profileConfig, webserverTrigger } = params;
 
-  const L = params.loggingFactory.getLogger();
-  const T = params.loggingFactory.getTracer();
-  const webserverTrigger = params.webserverTrigger;
+  const L = loggingFactory.getLogger();
+  const T = loggingFactory.getTracer();
 
-  const pluginCfg = params.sandboxConfig;
-  L.has("silly") && L.log("silly", "configuration: %s", JSON.stringify(pluginCfg));
+  L.has("silly") && L.log("silly", "configuration: %s", T.toMessage({
+    text: JSON.stringify(sandboxConfig)
+  }));
 
-  if (pluginCfg.enabled !== false) {
+  if (sandboxConfig.enabled !== false) {
     const app = express();
 
     app.use("*", function(req, res, next) {
@@ -32,6 +34,10 @@ function Service (params) {
 
     app.get("/example/:id", function(req, res) {
       res.status(200).json({
+        profileConfig: lodash.pick(profileConfig, [
+          "framework.hashtags",
+          "framework.mode"
+        ]),
         port: webserverTrigger.getPort(),
         host: webserverTrigger.getHost(),
         message: "example [" + req.params.id + "] request successfully"

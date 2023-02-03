@@ -40,6 +40,14 @@ describe("@saola/plugin-webserver", function() {
         {
           status: 200,
           data: {
+            "profileConfig": {
+              "framework": {
+                "hashtags": {
+                  "label": "saola-plugin-webserver-example"
+                },
+                "mode": "silent"
+              }
+            },
             "port": 7979,
             "host": "0.0.0.0",
             "message": "example [B7ED788C-E130-460C-9D3E-2CCF8B0EEADA] request successfully"
@@ -99,7 +107,7 @@ describe("@saola/plugin-webserver", function() {
     before(function() {
       chores.setEnvironments({
         SAOLA_SANDBOX: "inactive-portlets",
-        SAOLA_FORCING_SILENT: "saola,webserver",
+        SAOLA_FORCING_SILENT: "framework,webserver",
         LOGOLITE_FULL_LOG_MODE: "false",
         LOGOLITE_ALWAYS_ENABLED: "all",
         LOGOLITE_ALWAYS_MUTED: "all"
