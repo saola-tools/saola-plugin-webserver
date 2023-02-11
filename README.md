@@ -1,3 +1,3 @@
 # @saola/plugin-webserver
 
-> Saola plugin webserver layerware
+> Saola Web Server plugin
