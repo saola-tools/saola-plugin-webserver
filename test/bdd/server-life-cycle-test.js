@@ -3,8 +3,8 @@
 const axios = require("axios");
 const { assert } = require("liberica");
 
-const Devebot = require("@saola/core");
-const chores = Devebot.require("chores");
+const Core = require("@saola/core");
+const chores = Core.require("chores");
 
 const app = require("../app/simplest");
 const example = require("../app/example");

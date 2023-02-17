@@ -5,12 +5,12 @@ const http = require("http");
 const https = require("https");
 const path = require("path");
 
-const Devebot = require("@saola/core");
-const Promise = Devebot.require("bluebird");
-const chores = Devebot.require("chores");
-const lodash = Devebot.require("lodash");
+const Core = require("@saola/core");
+const Promise = Core.require("bluebird");
+const chores = Core.require("chores");
+const lodash = Core.require("lodash");
 
-const portlet = Devebot.require("portlet");
+const portlet = Core.require("portlet");
 const { getPortletDescriptors, PortletMixiner } = portlet;
 
 const SERVER_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"];
@@ -175,7 +175,7 @@ WebserverPortlet.prototype.start = function () {
       const host = serverInstance.address().address;
       //
       chores.isVerboseForced("webserver", portletConfig) &&
-          consoleLog("webserver is listening on %s://%s:%s", protocol, host, port);
+          chores.logConsole("webserver is listening on %s://%s:%s", protocol, host, port);
       L && L.has("silly") && L.log("silly", T && T.toMessage({
         tags: [ blockRef, "webserver", "started" ],
         text: "webserver has started"
@@ -199,7 +199,7 @@ WebserverPortlet.prototype.stop = function () {
     }));
     server.close(function (err) {
       chores.isVerboseForced("webserver", portletConfig) &&
-          consoleLog("webserver has been closed");
+          chores.logConsole("webserver has been closed");
       // https://nodejs.org/api/net.html#net_server_close_callback
       if (err) {
         L && L.has("error") && L.log("error", T && T.toMessage({
@@ -314,8 +314,5 @@ function loadSSLConfig (ctx = {}, serverCfg = {}, isLocalhost) {
 
   return ssl;
 }
-
-// eslint-disable-next-line no-console
-const consoleLog = console.log.bind(console);
 
 const readFileSync = fs.readFileSync.bind(fs);

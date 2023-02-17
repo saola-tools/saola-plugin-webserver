@@ -1,7 +1,7 @@
 "use strict";
 
-const Devebot = require("@saola/core");
-const chores = Devebot.require("chores");
+const Core = require("@saola/core");
+const chores = Core.require("chores");
 
 function WebserverTrigger (params = {}) {
   const { packageName, loggingFactory, webserverHandler } = params;
